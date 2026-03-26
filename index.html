@@ -65,6 +65,53 @@ nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;
 .btn-logout{background:none;border:1px solid var(--border);padding:6px 14px;font-size:.78rem;font-family:'DM Sans',sans-serif;color:var(--muted);cursor:pointer;border-radius:2px;transition:all .18s;}
 .btn-logout:hover{border-color:var(--ink);color:var(--ink);}
 
+/* PULL TO REFRESH */
+#ptr-indicator{
+  position:fixed;
+  top:58px; /* below nav */
+  left:50%;
+  transform:translateX(-50%) translateY(-100%);
+  z-index:99;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-top:none;
+  border-radius:0 0 20px 20px;
+  padding:8px 20px 10px;
+  box-shadow:0 4px 16px var(--shadow);
+  transition:transform .25s cubic-bezier(.4,0,.2,1), opacity .25s;
+  opacity:0;
+  pointer-events:none;
+  white-space:nowrap;
+  font-size:.82rem;
+  color:var(--muted);
+  font-family:'DM Sans',sans-serif;
+}
+#ptr-indicator.ptr-visible{
+  opacity:1;
+}
+#ptr-indicator.ptr-triggered{
+  color:var(--accent);
+}
+#ptr-indicator.ptr-loading{
+  color:var(--ink);
+}
+.ptr-arrow{
+  font-size:1rem;
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:inline-block;
+}
+#ptr-indicator.ptr-triggered .ptr-arrow{
+  transform:rotate(180deg);
+}
+#ptr-indicator.ptr-loading .ptr-arrow{
+  animation:spin .7s linear infinite;
+}
+.ptr-label{}
+
 /* LAYOUT */
 .users-bar{max-width:640px;margin:0 auto;padding:20px 20px 0;}
 .users-bar-inner{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
@@ -75,6 +122,9 @@ nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;
 .user-chip-av img{width:100%;height:100%;object-fit:cover;}
 .user-chip-name{font-size:.8rem;font-weight:500;}
 .feed-layout{max-width:640px;margin:0 auto;padding:24px 20px 60px;}
+
+/* pull-down visual feedback on the feed screen */
+#feed-screen{transition:transform .18s ease;}
 
 /* COMPOSER */
 .composer{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:20px;margin-bottom:24px;box-shadow:0 2px 12px var(--shadow);}
@@ -177,6 +227,12 @@ nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;
 <div id="global-loader">
   <div class="loader-brand">El<span>PepeGram</span></div>
   <div class="spinner"></div>
+</div>
+
+<!-- PULL TO REFRESH INDICATOR -->
+<div id="ptr-indicator">
+  <span class="ptr-arrow" id="ptr-arrow">↓</span>
+  <span class="ptr-label" id="ptr-label">Desliza para actualizar</span>
 </div>
 
 <!-- AUTH -->
@@ -290,6 +346,153 @@ async function sha256(str){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 function saveSession(u){ localStorage.setItem('fz_ses',JSON.stringify({id:u.id,username:u.username})); }
+
+// ── PULL TO REFRESH ────────────────────
+(function(){
+  const THRESHOLD = 80;   // px to pull before triggering
+  const MAX_PULL   = 120; // px max visual pull
+  let startY = 0;
+  let pulling = false;
+  let triggered = false;
+  let refreshing = false;
+  let currentPull = 0;
+
+  const indicator = document.getElementById('ptr-indicator');
+  const arrow     = document.getElementById('ptr-arrow');
+  const label     = document.getElementById('ptr-label');
+
+  function setIndicatorY(px){
+    // clamp visual travel
+    const clamped = Math.min(px, MAX_PULL);
+    // indicator peeks from below the nav
+    const travel = Math.min(clamped / THRESHOLD, 1);
+    indicator.style.transform = `translateX(-50%) translateY(${-100 + travel * 100}%)`;
+  }
+
+  function resetIndicator(){
+    indicator.style.transition = 'transform .3s cubic-bezier(.4,0,.2,1), opacity .25s';
+    indicator.style.transform = 'translateX(-50%) translateY(-100%)';
+    indicator.classList.remove('ptr-visible','ptr-triggered','ptr-loading');
+    pulling = false; triggered = false; currentPull = 0;
+    // restore arrow
+    arrow.textContent = '↓';
+    label.textContent = 'Desliza para actualizar';
+  }
+
+  document.addEventListener('touchstart', e => {
+    // Only when feed is visible and scrolled to top
+    if(!$('feed-screen') || !$('feed-screen').classList.contains('active')) return;
+    if(window.scrollY > 0) return;
+    startY = e.touches[0].clientY;
+    pulling = true;
+    triggered = false;
+    indicator.style.transition = 'none';
+  }, {passive: true});
+
+  document.addEventListener('touchmove', e => {
+    if(!pulling || refreshing) return;
+    const dy = e.touches[0].clientY - startY;
+    if(dy <= 0){ pulling = false; return; }
+    currentPull = dy;
+
+    indicator.classList.add('ptr-visible');
+    setIndicatorY(dy);
+
+    if(dy >= THRESHOLD && !triggered){
+      triggered = true;
+      indicator.classList.add('ptr-triggered');
+      arrow.textContent = '↑';
+      label.textContent = '¡Suelta para actualizar!';
+    } else if(dy < THRESHOLD && triggered){
+      triggered = false;
+      indicator.classList.remove('ptr-triggered');
+      arrow.textContent = '↓';
+      label.textContent = 'Desliza para actualizar';
+    }
+  }, {passive: true});
+
+  document.addEventListener('touchend', async () => {
+    if(!pulling) return;
+    if(triggered && !refreshing){
+      refreshing = true;
+      // Show loading state - stay visible
+      indicator.style.transition = 'transform .25s cubic-bezier(.4,0,.2,1)';
+      setIndicatorY(THRESHOLD + 10);
+      indicator.classList.add('ptr-loading');
+      indicator.classList.remove('ptr-triggered');
+      arrow.textContent = '↻';
+      label.textContent = 'Actualizando…';
+
+      try {
+        await refresh();
+      } catch(e){ /* silent */ }
+
+      label.textContent = '¡Listo!';
+      arrow.textContent = '✓';
+      await new Promise(r => setTimeout(r, 600));
+      refreshing = false;
+      resetIndicator();
+    } else {
+      resetIndicator();
+    }
+    pulling = false;
+  });
+
+  // Also support mouse (desktop testing)
+  let mouseDown = false;
+  let mouseStartY = 0;
+
+  document.addEventListener('mousedown', e => {
+    if(!$('feed-screen') || !$('feed-screen').classList.contains('active')) return;
+    if(window.scrollY > 0) return;
+    mouseDown = true; mouseStartY = e.clientY;
+    pulling = true; triggered = false;
+    indicator.style.transition = 'none';
+  });
+
+  document.addEventListener('mousemove', e => {
+    if(!mouseDown || !pulling || refreshing) return;
+    const dy = e.clientY - mouseStartY;
+    if(dy <= 0){ pulling = false; return; }
+    currentPull = dy;
+    indicator.classList.add('ptr-visible');
+    setIndicatorY(dy);
+    if(dy >= THRESHOLD && !triggered){
+      triggered = true;
+      indicator.classList.add('ptr-triggered');
+      arrow.textContent = '↑';
+      label.textContent = '¡Suelta para actualizar!';
+    } else if(dy < THRESHOLD && triggered){
+      triggered = false;
+      indicator.classList.remove('ptr-triggered');
+      arrow.textContent = '↓';
+      label.textContent = 'Desliza para actualizar';
+    }
+  });
+
+  document.addEventListener('mouseup', async () => {
+    if(!mouseDown) return;
+    mouseDown = false;
+    if(triggered && !refreshing){
+      refreshing = true;
+      indicator.style.transition = 'transform .25s cubic-bezier(.4,0,.2,1)';
+      setIndicatorY(THRESHOLD + 10);
+      indicator.classList.add('ptr-loading');
+      indicator.classList.remove('ptr-triggered');
+      arrow.textContent = '↻';
+      label.textContent = 'Actualizando…';
+      try { await refresh(); } catch(e){}
+      label.textContent = '¡Listo!';
+      arrow.textContent = '✓';
+      await new Promise(r => setTimeout(r, 600));
+      refreshing = false;
+      resetIndicator();
+    } else {
+      resetIndicator();
+    }
+    pulling = false;
+  });
+})();
 
 // ── SETUP CHECK ────────────────────────
 async function tablesOk(){

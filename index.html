@@ -3,843 +3,212 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Friendzone — tu rincón privado</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Friendzone</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root {
-    --cream: #f5f0e8;
-    --warm: #ede5d4;
-    --ink: #1a1510;
-    --muted: #7a6e60;
-    --accent: #c84b2f;
-    --accent2: #3a6b4a;
-    --card: #faf7f2;
-    --border: #d4c9b5;
-    --shadow: rgba(26,21,16,0.08);
-  }
+:root{--cream:#f4efe6;--warm:#ece5d5;--card:#faf7f2;--ink:#1a1510;--muted:#7a6e60;--border:#d4c9b5;--accent:#c84b2f;--green:#3a6b4a;--shadow:rgba(26,21,16,.07);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--ink);min-height:100vh;}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* LOADER */
+#global-loader{position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:14px;transition:opacity .3s;}
+#global-loader.hidden{opacity:0;pointer-events:none;}
+.loader-brand{font-family:'Playfair Display',serif;font-size:1.8rem;font-style:italic;}
+.loader-brand span{color:var(--accent);}
+.spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--ink);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-  body {
-    background: var(--cream);
-    font-family: 'DM Sans', sans-serif;
-    color: var(--ink);
-    min-height: 100vh;
-  }
+/* SCREENS */
+.screen{display:none;}.screen.active{display:block;}#auth-screen.active{display:flex;}
 
-  /* ─── PANTALLAS ─── */
-  .screen { display: none; }
-  .screen.active { display: block; }
+/* AUTH */
+#auth-screen{min-height:100vh;align-items:center;justify-content:center;background:var(--cream);position:relative;overflow:hidden;}
+#auth-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 15% 85%,rgba(200,75,47,.09) 0%,transparent 60%),radial-gradient(ellipse 50% 60% at 85% 15%,rgba(58,107,74,.09) 0%,transparent 60%);}
+.auth-box{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:48px 44px;width:100%;max-width:420px;position:relative;box-shadow:0 4px 40px var(--shadow);}
+.auth-box h1{font-family:'Playfair Display',serif;font-size:2rem;letter-spacing:-.02em;margin-bottom:4px;}
+.auth-box h1 span{color:var(--accent);}
+.tagline{color:var(--muted);font-size:.85rem;margin-bottom:32px;}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:28px;}
+.auth-tab{background:none;border:none;padding:10px 20px 10px 0;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--muted);cursor:pointer;position:relative;transition:color .2s;}
+.auth-tab.active{color:var(--ink);font-weight:500;}
+.auth-tab.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--accent);}
+.auth-form{display:none;}.auth-form.active{display:block;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:500;}
+.field input,.field textarea{width:100%;background:var(--warm);border:1px solid var(--border);border-radius:2px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--ink);transition:border-color .2s;outline:none;}
+.field input:focus,.field textarea:focus{border-color:var(--ink);}
+.field textarea{resize:vertical;min-height:80px;}
+.avatar-upload{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.avatar-preview{width:56px;height:56px;border-radius:50%;background:var(--warm);border:2px dashed var(--border);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;}
+.avatar-preview img{width:100%;height:100%;object-fit:cover;}
+.ghost-label{font-size:.82rem;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.btn{display:inline-block;padding:11px 28px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;letter-spacing:.04em;border:none;cursor:pointer;transition:all .18s;border-radius:2px;}
+.btn-primary{background:var(--ink);color:var(--cream);width:100%;}
+.btn-primary:hover{background:#2d261e;}
+.btn-primary:disabled,.btn-post:disabled,.btn-save:disabled{opacity:.5;cursor:not-allowed;}
+.error-msg{color:var(--accent);font-size:.82rem;margin-bottom:12px;display:none;}
 
-  /* ─── AUTH ─── */
-  #auth-screen {
-    min-height: 100vh;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    background: var(--cream);
-    position: relative;
-    overflow: hidden;
-  }
-  #auth-screen.active { display: flex; }
+/* NAV */
+nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;}
+.nav-brand{font-family:'Playfair Display',serif;font-size:1.3rem;font-style:italic;}
+.nav-brand span{color:var(--accent);}
+.nav-user{display:flex;align-items:center;gap:12px;}
+.nav-avatar{width:34px;height:34px;border-radius:50%;background:var(--warm);border:2px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;flex-shrink:0;}
+.nav-avatar img{width:100%;height:100%;object-fit:cover;}
+.nav-username{font-size:.88rem;font-weight:500;cursor:pointer;}
+.nav-username:hover{color:var(--accent);}
+.btn-logout{background:none;border:1px solid var(--border);padding:6px 14px;font-size:.78rem;font-family:'DM Sans',sans-serif;color:var(--muted);cursor:pointer;border-radius:2px;transition:all .18s;}
+.btn-logout:hover{border-color:var(--ink);color:var(--ink);}
 
-  #auth-screen::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 60% 50% at 20% 80%, rgba(200,75,47,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 60% at 80% 20%, rgba(58,107,74,0.08) 0%, transparent 60%);
-  }
+/* LAYOUT */
+.users-bar{max-width:640px;margin:0 auto;padding:20px 20px 0;}
+.users-bar-inner{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.users-bar-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:500;flex-shrink:0;}
+.user-chip{display:flex;align-items:center;gap:6px;background:var(--warm);border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 4px;cursor:pointer;transition:all .18s;}
+.user-chip:hover{border-color:var(--ink);}
+.user-chip-av{width:22px;height:22px;border-radius:50%;overflow:hidden;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;}
+.user-chip-av img{width:100%;height:100%;object-fit:cover;}
+.user-chip-name{font-size:.8rem;font-weight:500;}
+.feed-layout{max-width:640px;margin:0 auto;padding:24px 20px 60px;}
 
-  .auth-box {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 48px 44px;
-    width: 100%;
-    max-width: 420px;
-    position: relative;
-    box-shadow: 0 4px 40px var(--shadow);
-  }
+/* COMPOSER */
+.composer{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:20px;margin-bottom:24px;box-shadow:0 2px 12px var(--shadow);}
+.composer-header{font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:14px;color:var(--muted);font-style:italic;}
+.composer textarea{width:100%;background:var(--warm);border:1px solid var(--border);border-radius:2px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--ink);resize:none;min-height:88px;outline:none;transition:border-color .2s;}
+.composer textarea:focus{border-color:var(--ink);}
+.compose-preview{margin:12px 0;position:relative;display:none;}
+.compose-preview img{width:100%;border-radius:2px;max-height:280px;object-fit:cover;}
+.remove-photo{position:absolute;top:8px;right:8px;background:rgba(26,21,16,.7);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;}
+.composer-actions{display:flex;align-items:center;justify-content:space-between;margin-top:12px;}
+.btn-photo-label{display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--border);border-radius:2px;font-size:.82rem;color:var(--muted);cursor:pointer;background:none;transition:all .18s;font-family:'DM Sans',sans-serif;}
+.btn-photo-label:hover{border-color:var(--ink);color:var(--ink);}
+.btn-post{background:var(--accent);color:#fff;padding:9px 22px;font-size:.85rem;font-weight:500;border-radius:2px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .18s;}
+.btn-post:hover{background:#a83d25;}
 
-  .auth-box h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 2rem;
-    letter-spacing: -0.02em;
-    margin-bottom: 4px;
-  }
+/* POSTS */
+.posts-list{display:flex;flex-direction:column;gap:20px;}
+.post-card{background:var(--card);border:1px solid var(--border);border-radius:2px;box-shadow:0 2px 12px var(--shadow);overflow:hidden;animation:slideIn .3s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.post-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;}
+.post-user{display:flex;align-items:center;gap:10px;}
+.post-avatar{width:36px;height:36px;border-radius:50%;background:var(--warm);border:2px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;cursor:pointer;}
+.post-avatar:hover{border-color:var(--accent);}
+.post-avatar img{width:100%;height:100%;object-fit:cover;}
+.post-username{font-weight:500;font-size:.88rem;cursor:pointer;}
+.post-username:hover{color:var(--accent);}
+.post-time{font-size:.75rem;color:var(--muted);}
+.post-delete{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px;opacity:0;transition:opacity .2s;}
+.post-card:hover .post-delete{opacity:1;}
+.post-delete:hover{color:var(--accent);}
+.post-image{width:100%;max-height:420px;object-fit:cover;display:block;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.post-body{padding:12px 16px;}
+.post-text{font-size:.91rem;line-height:1.6;white-space:pre-wrap;word-break:break-word;}
+.post-text.text-only{font-family:'Playfair Display',serif;font-size:1.05rem;line-height:1.7;font-style:italic;padding:8px 0;}
+.post-actions{display:flex;align-items:center;padding:6px 10px;border-top:1px solid var(--border);}
+.btn-like{display:flex;align-items:center;gap:6px;background:none;border:none;padding:7px 12px;font-size:.83rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;border-radius:2px;transition:all .18s;}
+.btn-like:hover{background:var(--warm);color:var(--accent);}
+.btn-like.liked{color:var(--accent);font-weight:500;}
+.btn-like .heart{font-size:1rem;transition:transform .2s;}
+.btn-like.liked .heart{transform:scale(1.2);}
+.btn-comment-toggle{display:flex;align-items:center;gap:6px;background:none;border:none;padding:7px 12px;font-size:.83rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;border-radius:2px;transition:all .18s;}
+.btn-comment-toggle:hover{background:var(--warm);color:var(--ink);}
+.comments-section{border-top:1px solid var(--border);padding:12px 16px;background:var(--warm);display:none;}
+.comments-section.open{display:block;}
+.comment-list{margin-bottom:12px;}
+.comment-item{display:flex;gap:8px;margin-bottom:10px;animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.comment-avatar{width:26px;height:26px;border-radius:50%;background:var(--border);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem;border:1px solid var(--border);cursor:pointer;}
+.comment-avatar img{width:100%;height:100%;object-fit:cover;}
+.comment-user{font-size:.78rem;font-weight:500;cursor:pointer;}
+.comment-user:hover{color:var(--accent);}
+.comment-text{font-size:.83rem;line-height:1.5;margin-top:1px;}
+.no-comments{font-size:.82rem;color:var(--muted);font-style:italic;margin-bottom:10px;}
+.comment-form{display:flex;gap:8px;}
+.comment-form input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:2px;padding:8px 12px;font-family:'DM Sans',sans-serif;font-size:.83rem;color:var(--ink);outline:none;}
+.comment-form input:focus{border-color:var(--ink);}
+.btn-send-comment{background:var(--ink);color:var(--cream);border:none;padding:8px 14px;font-size:.8rem;cursor:pointer;border-radius:2px;font-family:'DM Sans',sans-serif;transition:background .18s;}
+.btn-send-comment:hover{background:var(--accent);}
+.empty-feed{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-feed .big-emoji{font-size:2.5rem;display:block;margin-bottom:12px;}
+.empty-feed p{font-family:'Playfair Display',serif;font-style:italic;font-size:1rem;}
 
-  .auth-box .tagline {
-    color: var(--muted);
-    font-size: 0.85rem;
-    margin-bottom: 32px;
-  }
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,21,16,.5);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:32px;max-width:420px;width:100%;position:relative;box-shadow:0 8px 60px rgba(26,21,16,.18);animation:modalIn .25s ease;}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted);transition:color .18s;}
+.modal-close:hover{color:var(--ink);}
+.profile-view{display:flex;flex-direction:column;align-items:center;text-align:center;}
+.profile-big-av{width:80px;height:80px;border-radius:50%;background:var(--warm);border:3px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:14px;}
+.profile-big-av img{width:100%;height:100%;object-fit:cover;}
+.profile-name{font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:4px;}
+.profile-bio{color:var(--muted);font-size:.88rem;line-height:1.6;font-style:italic;max-width:300px;}
+.profile-stats{display:flex;gap:24px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);width:100%;justify-content:center;}
+.stat{text-align:center;}
+.stat-n{font-weight:600;font-size:1.1rem;display:block;}
+.stat-l{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.btn-edit-profile{margin-top:18px;width:100%;background:none;border:1px solid var(--border);padding:9px;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--muted);cursor:pointer;border-radius:2px;transition:all .18s;}
+.btn-edit-profile:hover{border-color:var(--ink);color:var(--ink);}
+.edit-form-title{font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:18px;}
+.btn-save{margin-top:14px;width:100%;background:var(--green);color:#fff;border:none;padding:10px;font-family:'DM Sans',sans-serif;font-size:.86rem;cursor:pointer;border-radius:2px;transition:background .18s;}
+.btn-save:hover{background:#2e5339;}
 
-  .auth-tabs {
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 28px;
-  }
+/* SQL BOX */
+.sql-box{background:var(--cream);border:1px solid var(--border);border-radius:2px;padding:32px;max-width:640px;width:100%;font-family:'DM Sans',sans-serif;}
+.sql-box h2{font-family:'Playfair Display',serif;font-style:italic;margin-bottom:10px;}
+.sql-box p{font-size:.88rem;color:var(--muted);margin-bottom:16px;line-height:1.6;}
+.sql-box pre{background:#1a1510;color:#f4efe6;padding:20px;border-radius:2px;font-size:.76rem;overflow:auto;line-height:1.7;max-height:340px;}
+.sql-box .note{margin-top:14px;font-size:.8rem;color:var(--muted);}
 
-  .auth-tab {
-    background: none;
-    border: none;
-    padding: 10px 20px 10px 0;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    color: var(--muted);
-    cursor: pointer;
-    position: relative;
-    transition: color 0.2s;
-  }
-  .auth-tab.active {
-    color: var(--ink);
-    font-weight: 500;
-  }
-  .auth-tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--accent);
-  }
-
-  .auth-form { display: none; }
-  .auth-form.active { display: block; }
-
-  .field {
-    margin-bottom: 16px;
-  }
-  .field label {
-    display: block;
-    font-size: 0.78rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 6px;
-    font-weight: 500;
-  }
-  .field input, .field textarea {
-    width: 100%;
-    background: var(--warm);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 10px 14px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    color: var(--ink);
-    transition: border-color 0.2s;
-    outline: none;
-  }
-  .field input:focus, .field textarea:focus {
-    border-color: var(--ink);
-  }
-  .field textarea { resize: vertical; min-height: 80px; }
-
-  .avatar-upload {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 16px;
-  }
-  .avatar-preview {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--warm);
-    border: 2px dashed var(--border);
-    overflow: hidden;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-  }
-  .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
-  .avatar-upload label.btn-ghost {
-    font-size: 0.82rem;
-    color: var(--muted);
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  .btn {
-    display: inline-block;
-    padding: 11px 28px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    border: none;
-    cursor: pointer;
-    transition: all 0.18s;
-    border-radius: 2px;
-  }
-  .btn-primary {
-    background: var(--ink);
-    color: var(--cream);
-    width: 100%;
-  }
-  .btn-primary:hover { background: #2d261e; }
-
-  .error-msg {
-    color: var(--accent);
-    font-size: 0.82rem;
-    margin-bottom: 12px;
-    display: none;
-  }
-
-  /* ─── FEED ─── */
-  #feed-screen {
-    min-height: 100vh;
-    background: var(--cream);
-  }
-
-  /* ─── NAV ─── */
-  nav {
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 58px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .nav-brand {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.3rem;
-    font-style: italic;
-    letter-spacing: -0.01em;
-  }
-  .nav-brand span { color: var(--accent); }
-
-  .nav-user {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .nav-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: var(--warm);
-    border: 2px solid var(--border);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    cursor: pointer;
-  }
-  .nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .nav-username {
-    font-size: 0.88rem;
-    font-weight: 500;
-    cursor: pointer;
-    color: var(--ink);
-  }
-  .nav-username:hover { color: var(--accent); }
-
-  .btn-logout {
-    background: none;
-    border: 1px solid var(--border);
-    padding: 6px 14px;
-    font-size: 0.78rem;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--muted);
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.18s;
-  }
-  .btn-logout:hover { border-color: var(--ink); color: var(--ink); }
-
-  /* ─── LAYOUT ─── */
-  .feed-layout {
-    max-width: 640px;
-    margin: 0 auto;
-    padding: 32px 20px;
-  }
-
-  /* ─── COMPOSER ─── */
-  .composer {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 20px;
-    margin-bottom: 28px;
-    box-shadow: 0 2px 12px var(--shadow);
-  }
-
-  .composer-header {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.05rem;
-    margin-bottom: 14px;
-    color: var(--muted);
-    font-style: italic;
-  }
-
-  .composer textarea {
-    width: 100%;
-    background: var(--warm);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 12px 14px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.92rem;
-    color: var(--ink);
-    resize: none;
-    min-height: 90px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .composer textarea:focus { border-color: var(--ink); }
-
-  .composer-photo-preview {
-    margin: 12px 0;
-    position: relative;
-    display: none;
-  }
-  .composer-photo-preview img {
-    width: 100%;
-    border-radius: 2px;
-    max-height: 280px;
-    object-fit: cover;
-  }
-  .remove-photo {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(26,21,16,0.7);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    cursor: pointer;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .composer-actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 12px;
-    gap: 10px;
-  }
-
-  .composer-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .btn-photo-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    font-size: 0.82rem;
-    color: var(--muted);
-    cursor: pointer;
-    background: none;
-    transition: all 0.18s;
-    font-family: 'DM Sans', sans-serif;
-  }
-  .btn-photo-label:hover { border-color: var(--ink); color: var(--ink); }
-
-  .btn-post {
-    background: var(--accent);
-    color: white;
-    padding: 9px 22px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    border-radius: 2px;
-    border: none;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    transition: background 0.18s;
-  }
-  .btn-post:hover { background: #a83d25; }
-
-  /* ─── POSTS ─── */
-  .posts-list { display: flex; flex-direction: column; gap: 20px; }
-
-  .post-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    box-shadow: 0 2px 12px var(--shadow);
-    overflow: hidden;
-    animation: slideIn 0.3s ease;
-  }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .post-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px 10px;
-  }
-
-  .post-user {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .post-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--warm);
-    border: 2px solid var(--border);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    flex-shrink: 0;
-    cursor: pointer;
-  }
-  .post-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .post-avatar:hover { border-color: var(--accent); }
-
-  .post-meta {}
-  .post-username {
-    font-weight: 500;
-    font-size: 0.88rem;
-    cursor: pointer;
-  }
-  .post-username:hover { color: var(--accent); }
-  .post-time {
-    font-size: 0.75rem;
-    color: var(--muted);
-  }
-
-  .post-delete {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 1rem;
-    padding: 4px;
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-  .post-card:hover .post-delete { opacity: 1; }
-  .post-delete:hover { color: var(--accent); }
-
-  .post-image {
-    width: 100%;
-    max-height: 420px;
-    object-fit: cover;
-    display: block;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .post-body {
-    padding: 12px 16px;
-  }
-  .post-text {
-    font-size: 0.91rem;
-    line-height: 1.6;
-    color: var(--ink);
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .post-text.text-only {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.05rem;
-    line-height: 1.7;
-    font-style: italic;
-    padding: 8px 0;
-  }
-
-  .post-actions {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    padding: 8px 10px;
-    border-top: 1px solid var(--border);
-  }
-
-  .btn-like {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: none;
-    border: none;
-    padding: 7px 12px;
-    font-size: 0.83rem;
-    color: var(--muted);
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    border-radius: 2px;
-    transition: all 0.18s;
-  }
-  .btn-like:hover { background: var(--warm); color: var(--accent); }
-  .btn-like.liked { color: var(--accent); font-weight: 500; }
-  .btn-like .heart { font-size: 1rem; transition: transform 0.2s; }
-  .btn-like.liked .heart { transform: scale(1.2); }
-
-  .btn-comment-toggle {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: none;
-    border: none;
-    padding: 7px 12px;
-    font-size: 0.83rem;
-    color: var(--muted);
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    border-radius: 2px;
-    transition: all 0.18s;
-  }
-  .btn-comment-toggle:hover { background: var(--warm); color: var(--ink); }
-
-  .comments-section {
-    border-top: 1px solid var(--border);
-    padding: 12px 16px;
-    background: var(--warm);
-    display: none;
-  }
-  .comments-section.open { display: block; }
-
-  .comment-list { margin-bottom: 12px; }
-  .comment-item {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-    animation: fadeIn 0.2s ease;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  .comment-avatar {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: var(--border);
-    overflow: hidden;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem;
-    border: 1px solid var(--border);
-    cursor: pointer;
-  }
-  .comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .comment-content {}
-  .comment-user {
-    font-size: 0.78rem;
-    font-weight: 500;
-    cursor: pointer;
-  }
-  .comment-user:hover { color: var(--accent); }
-  .comment-text {
-    font-size: 0.83rem;
-    color: var(--ink);
-    line-height: 1.5;
-    margin-top: 1px;
-  }
-  .no-comments {
-    font-size: 0.82rem;
-    color: var(--muted);
-    font-style: italic;
-    margin-bottom: 10px;
-  }
-
-  .comment-form {
-    display: flex;
-    gap: 8px;
-  }
-  .comment-form input {
-    flex: 1;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 8px 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.83rem;
-    color: var(--ink);
-    outline: none;
-  }
-  .comment-form input:focus { border-color: var(--ink); }
-  .btn-send-comment {
-    background: var(--ink);
-    color: var(--cream);
-    border: none;
-    padding: 8px 14px;
-    font-size: 0.8rem;
-    cursor: pointer;
-    border-radius: 2px;
-    font-family: 'DM Sans', sans-serif;
-    transition: background 0.18s;
-  }
-  .btn-send-comment:hover { background: var(--accent); }
-
-  .empty-feed {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-  }
-  .empty-feed .big-emoji { font-size: 2.5rem; display: block; margin-bottom: 12px; }
-  .empty-feed p { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1rem; }
-
-  /* ─── PROFILE MODAL ─── */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(26,21,16,0.5);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 32px;
-    max-width: 420px;
-    width: 100%;
-    position: relative;
-    box-shadow: 0 8px 60px rgba(26,21,16,0.18);
-    animation: modalIn 0.25s ease;
-  }
-  @keyframes modalIn {
-    from { opacity: 0; transform: scale(0.96) translateY(10px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
-  }
-  .modal-close {
-    position: absolute;
-    top: 14px; right: 16px;
-    background: none; border: none;
-    font-size: 1.3rem; cursor: pointer;
-    color: var(--muted);
-    transition: color 0.18s;
-  }
-  .modal-close:hover { color: var(--ink); }
-
-  .profile-view {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-  .profile-big-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: var(--warm);
-    border: 3px solid var(--border);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    margin-bottom: 14px;
-  }
-  .profile-big-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .profile-name {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.4rem;
-    margin-bottom: 4px;
-  }
-  .profile-bio {
-    color: var(--muted);
-    font-size: 0.88rem;
-    line-height: 1.6;
-    font-style: italic;
-    max-width: 300px;
-  }
-  .profile-stats {
-    display: flex;
-    gap: 24px;
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-    width: 100%;
-    justify-content: center;
-  }
-  .stat { text-align: center; }
-  .stat-n { font-weight: 600; font-size: 1.1rem; display: block; }
-  .stat-l { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-
-  .profile-edit-form { width: 100%; }
-  .profile-edit-form h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.1rem;
-    margin-bottom: 18px;
-  }
-  .btn-edit-profile {
-    margin-top: 18px;
-    width: 100%;
-    background: none;
-    border: 1px solid var(--border);
-    padding: 9px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.82rem;
-    color: var(--muted);
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.18s;
-  }
-  .btn-edit-profile:hover { border-color: var(--ink); color: var(--ink); }
-  .btn-save-profile {
-    margin-top: 14px;
-    width: 100%;
-    background: var(--accent2);
-    color: white;
-    border: none;
-    padding: 10px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.86rem;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: background 0.18s;
-  }
-  .btn-save-profile:hover { background: #2e5339; }
-
-  /* ─── SCROLLBAR ─── */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: var(--cream); }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-  /* ─── USERS SIDEBAR hint ─── */
-  .users-bar {
-    max-width: 640px;
-    margin: 0 auto 0;
-    padding: 0 20px 20px;
-  }
-  .users-bar-inner {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .users-bar-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: var(--muted);
-    font-weight: 500;
-  }
-  .user-chip {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--warm);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 4px 10px 4px 4px;
-    cursor: pointer;
-    transition: all 0.18s;
-  }
-  .user-chip:hover { border-color: var(--ink); }
-  .user-chip-avatar {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    overflow: hidden;
-    background: var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-  }
-  .user-chip-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .user-chip-name { font-size: 0.8rem; font-weight: 500; }
-
-  @media (max-width: 480px) {
-    .auth-box { padding: 30px 22px; }
-    nav { padding: 0 14px; }
-    .feed-layout { padding: 20px 12px; }
-  }
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--cream);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+@media(max-width:480px){.auth-box{padding:30px 22px;}nav{padding:0 14px;}.feed-layout{padding:16px 12px 60px;}}
 </style>
 </head>
 <body>
 
-<!-- ─── AUTH ─── -->
-<div id="auth-screen" class="active">
-  <div class="auth-box">
-    <h1>Friendzone</h1>
-    <p class="tagline">Solo para los que importan.</p>
+<div id="global-loader">
+  <div class="loader-brand">Friend<span>zone</span></div>
+  <div class="spinner"></div>
+</div>
 
+<!-- AUTH -->
+<div id="auth-screen" class="screen">
+  <div class="auth-box">
+    <h1>Friend<span>zone</span></h1>
+    <p class="tagline">Solo para los que importan.</p>
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchTab('login')">Entrar</button>
       <button class="auth-tab" onclick="switchTab('register')">Crear cuenta</button>
     </div>
-
-    <!-- LOGIN -->
     <div id="form-login" class="auth-form active">
       <p id="login-error" class="error-msg"></p>
-      <div class="field">
-        <label>Usuario</label>
-        <input type="text" id="login-user" placeholder="tu username" autocomplete="username">
-      </div>
-      <div class="field">
-        <label>Contraseña</label>
-        <input type="password" id="login-pass" placeholder="••••••" autocomplete="current-password">
-      </div>
-      <button class="btn btn-primary" onclick="doLogin()">Entrar</button>
+      <div class="field"><label>Usuario</label><input type="text" id="login-user" placeholder="@tuapodo" autocomplete="username"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="login-pass" placeholder="••••••" autocomplete="current-password"></div>
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Entrar</button>
     </div>
-
-    <!-- REGISTER -->
     <div id="form-register" class="auth-form">
       <p id="reg-error" class="error-msg"></p>
       <div class="avatar-upload">
-        <div class="avatar-preview" id="reg-avatar-preview">😊</div>
+        <div class="avatar-preview" id="reg-av-preview">😊</div>
         <div>
-          <label class="btn-ghost" for="reg-avatar-file">Subir foto de perfil</label>
-          <input type="file" id="reg-avatar-file" accept="image/*" style="display:none" onchange="previewRegAvatar(event)">
-          <p style="font-size:0.75rem;color:var(--muted);margin-top:4px;">Opcional</p>
+          <label class="ghost-label" for="reg-av-file">Subir foto de perfil</label>
+          <input type="file" id="reg-av-file" accept="image/*" style="display:none" onchange="previewRegAvatar(event)">
+          <p style="font-size:.75rem;color:var(--muted);margin-top:4px;">Opcional</p>
         </div>
       </div>
-      <div class="field">
-        <label>Username</label>
-        <input type="text" id="reg-user" placeholder="@tuapodo" autocomplete="username">
-      </div>
-      <div class="field">
-        <label>Contraseña</label>
-        <input type="password" id="reg-pass" placeholder="••••••" autocomplete="new-password">
-      </div>
-      <div class="field">
-        <label>Bio</label>
-        <textarea id="reg-bio" placeholder="Cuéntanos algo sobre ti..."></textarea>
-      </div>
-      <button class="btn btn-primary" onclick="doRegister()">Crear cuenta</button>
+      <div class="field"><label>Username</label><input type="text" id="reg-user" placeholder="@tuapodo" autocomplete="username"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="reg-pass" placeholder="••••••" autocomplete="new-password"></div>
+      <div class="field"><label>Bio</label><textarea id="reg-bio" placeholder="Cuéntanos algo sobre ti..."></textarea></div>
+      <button class="btn btn-primary" id="btn-register" onclick="doRegister()">Crear cuenta</button>
     </div>
   </div>
 </div>
 
-<!-- ─── FEED ─── -->
+<!-- FEED -->
 <div id="feed-screen" class="screen">
   <nav>
     <span class="nav-brand">Friend<span>zone</span></span>
@@ -849,40 +218,26 @@
       <button class="btn-logout" onclick="doLogout()">Salir</button>
     </div>
   </nav>
-
-  <!-- Amigos en línea -->
-  <div class="users-bar">
-    <div class="users-bar-inner" id="users-bar-inner">
-      <span class="users-bar-label">Amigos</span>
-    </div>
-  </div>
-
+  <div class="users-bar"><div class="users-bar-inner" id="users-bar"></div></div>
   <div class="feed-layout">
-    <!-- Composer -->
     <div class="composer">
       <p class="composer-header">¿Qué hay de nuevo?</p>
       <textarea id="compose-text" placeholder="Comparte algo con tus amigos..."></textarea>
-      <div class="composer-photo-preview" id="compose-preview">
+      <div class="compose-preview" id="compose-preview">
         <img id="compose-preview-img" src="" alt="">
         <button class="remove-photo" onclick="removePhoto()">✕</button>
       </div>
       <div class="composer-actions">
-        <div class="composer-left">
-          <label class="btn-photo-label" for="compose-photo">
-            📷 Foto
-          </label>
-          <input type="file" id="compose-photo" accept="image/*" style="display:none" onchange="previewPhoto(event)">
-        </div>
-        <button class="btn-post" onclick="submitPost()">Publicar</button>
+        <label class="btn-photo-label" for="compose-photo">📷 Foto</label>
+        <input type="file" id="compose-photo" accept="image/*" style="display:none" onchange="previewPhoto(event)">
+        <button class="btn-post" id="btn-post" onclick="submitPost()">Publicar</button>
       </div>
     </div>
-
-    <!-- Posts -->
     <div class="posts-list" id="posts-list"></div>
   </div>
 </div>
 
-<!-- ─── PROFILE MODAL ─── -->
+<!-- MODAL -->
 <div class="modal-overlay" id="profile-modal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
@@ -891,491 +246,397 @@
 </div>
 
 <script>
-// ───────────────────────────────────────────
-// STORAGE helpers
-// ───────────────────────────────────────────
-const DB = {
-  get: k => { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } },
-  set: (k,v) => localStorage.setItem(k, JSON.stringify(v)),
-};
+const SURL = 'https://ztzmjaemedttoufcqque.supabase.co';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0em1qYWVtZWR0dG91ZmNxcXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0ODI0ODMsImV4cCI6MjA5MDA1ODQ4M30.WUTFWpp0G0RTBX6zU2GmtUriAbqVOoa2B4NOP_DUyyo';
+const sb = supabase.createClient(SURL, SKEY);
 
-function getUsers() { return DB.get('fz_users') || {}; }
-function saveUsers(u) { DB.set('fz_users', u); }
-function getPosts() { return DB.get('fz_posts') || []; }
-function savePosts(p) { DB.set('fz_posts', p); }
-function getCurrentUser() { return DB.get('fz_current'); }
-function setCurrentUser(u) { DB.set('fz_current', u); }
+let me = null;
+let allUsers = {};
+let posts = [];
+let pendingPhoto = null;
+let editAv = null;
+let regAv = null;
 
-// ───────────────────────────────────────────
-// AUTH
-// ───────────────────────────────────────────
-let regAvatarData = null;
+// ── UTILS ──────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const ini = s => (s||'?')[0].toUpperCase();
+function showErr(id, msg){ const e=$(id); e.textContent=msg; e.style.display='block'; }
+function hideErr(id){ const e=$(id); if(e) e.style.display='none'; }
+function setBtn(id, loading, orig){
+  const b=$(id); if(!b) return;
+  b.disabled=loading;
+  if(loading){ b.dataset.orig=b.textContent; b.textContent='…'; }
+  else if(b.dataset.orig) b.textContent=b.dataset.orig;
+}
+function loader(show){ $('global-loader').classList.toggle('hidden',!show); }
+function timeAgo(ts){
+  const d=Date.now()-new Date(ts).getTime(), m=Math.floor(d/60000), h=Math.floor(m/60), dy=Math.floor(h/24);
+  if(m<1) return 'justo ahora';
+  if(m<60) return `hace ${m}m`;
+  if(h<24) return `hace ${h}h`;
+  if(dy<7) return `hace ${dy}d`;
+  return new Date(ts).toLocaleDateString('es-CL',{day:'numeric',month:'short'});
+}
+function readFile(file, cb){
+  const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(file);
+}
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function saveSession(u){ localStorage.setItem('fz_ses',JSON.stringify({id:u.id,username:u.username})); }
 
-function switchTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((t,i) => {
-    t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register'));
+// ── SETUP CHECK ────────────────────────
+async function tablesOk(){
+  const r = await sb.from('fz_users').select('id').limit(1);
+  return !r.error;
+}
+
+function showSetup(){
+  $('global-loader').innerHTML = `
+    <div class="sql-box">
+      <h2>Un paso antes de empezar 🛠</h2>
+      <p>Crea las tablas en tu proyecto Supabase.<br>
+         Ve a <strong>SQL Editor</strong> en el dashboard y ejecuta este script:</p>
+      <pre id="sql-pre"></pre>
+      <p class="note">Luego recarga esta página y listo.</p>
+    </div>`;
+  $('global-loader').classList.remove('hidden');
+  $('sql-pre').textContent = SQL_SETUP;
+}
+
+const SQL_SETUP = `-- Friendzone: ejecuta esto UNA SOLA VEZ en Supabase SQL Editor
+
+create table if not exists fz_users (
+  id            uuid primary key default gen_random_uuid(),
+  username      text unique not null,
+  password_hash text not null,
+  bio           text,
+  avatar_b64    text,
+  created_at    timestamptz default now()
+);
+
+create table if not exists fz_posts (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid references fz_users(id) on delete cascade,
+  text       text,
+  image_b64  text,
+  created_at timestamptz default now()
+);
+
+create table if not exists fz_likes (
+  id      uuid primary key default gen_random_uuid(),
+  post_id uuid references fz_posts(id) on delete cascade,
+  user_id uuid references fz_users(id) on delete cascade,
+  unique(post_id, user_id)
+);
+
+create table if not exists fz_comments (
+  id         uuid primary key default gen_random_uuid(),
+  post_id    uuid references fz_posts(id) on delete cascade,
+  user_id    uuid references fz_users(id) on delete cascade,
+  text       text not null,
+  created_at timestamptz default now()
+);
+
+-- RLS: acceso total (red privada entre amigos)
+alter table fz_users    enable row level security;
+alter table fz_posts    enable row level security;
+alter table fz_likes    enable row level security;
+alter table fz_comments enable row level security;
+
+do $$ begin
+  if not exists (select 1 from pg_policies where tablename='fz_users'    and policyname='all') then
+    create policy "all" on fz_users    for all using (true) with check (true); end if;
+  if not exists (select 1 from pg_policies where tablename='fz_posts'    and policyname='all') then
+    create policy "all" on fz_posts    for all using (true) with check (true); end if;
+  if not exists (select 1 from pg_policies where tablename='fz_likes'    and policyname='all') then
+    create policy "all" on fz_likes    for all using (true) with check (true); end if;
+  if not exists (select 1 from pg_policies where tablename='fz_comments' and policyname='all') then
+    create policy "all" on fz_comments for all using (true) with check (true); end if;
+end $$;`;
+
+// ── AUTH ───────────────────────────────
+function switchTab(tab){
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='login'?0:1)));
+  $('form-login').classList.toggle('active',tab==='login');
+  $('form-register').classList.toggle('active',tab==='register');
+}
+
+function previewRegAvatar(e){
+  readFile(e.target.files[0], d=>{ regAv=d; $('reg-av-preview').innerHTML=`<img src="${d}" alt="">`; });
+}
+
+async function doRegister(){
+  const username=$('reg-user').value.trim().toLowerCase().replace(/\s+/g,'');
+  const password=$('reg-pass').value;
+  const bio=$('reg-bio').value.trim();
+  hideErr('reg-error');
+  if(username.length<2) return showErr('reg-error','Username debe tener al menos 2 caracteres.');
+  if(password.length<4)  return showErr('reg-error','Contraseña debe tener al menos 4 caracteres.');
+  setBtn('btn-register',true);
+  const {data:ex}=await sb.from('fz_users').select('id').eq('username',username).maybeSingle();
+  if(ex){ setBtn('btn-register',false); return showErr('reg-error','Ese username ya está en uso.'); }
+  const hash=await sha256(password);
+  const {data:user,error}=await sb.from('fz_users').insert({username,password_hash:hash,bio,avatar_b64:regAv||null}).select().single();
+  setBtn('btn-register',false);
+  if(error) return showErr('reg-error','Error: '+error.message);
+  me=user; saveSession(user); await boot();
+}
+
+async function doLogin(){
+  const username=$('login-user').value.trim().toLowerCase();
+  const password=$('login-pass').value;
+  hideErr('login-error');
+  setBtn('btn-login',true);
+  const hash=await sha256(password);
+  const {data:user}=await sb.from('fz_users').select('*').eq('username',username).eq('password_hash',hash).maybeSingle();
+  setBtn('btn-login',false);
+  if(!user) return showErr('login-error','Usuario o contraseña incorrectos.');
+  me=user; saveSession(user); await boot();
+}
+
+function doLogout(){
+  localStorage.removeItem('fz_ses');
+  me=null; posts=[]; allUsers={};
+  $('feed-screen').classList.remove('active');
+  $('auth-screen').classList.add('active');
+}
+
+// ── BOOT ───────────────────────────────
+async function boot(){
+  loader(true);
+  const {data:ua}=await sb.from('fz_users').select('id,username,bio,avatar_b64');
+  allUsers={}; (ua||[]).forEach(u=>allUsers[u.username]=u);
+  await loadPosts();
+  $('auth-screen').classList.remove('active');
+  $('feed-screen').classList.add('active');
+  renderNav(); renderUsersBar(); renderPosts();
+  loader(false);
+
+  // Realtime
+  sb.channel('fz').
+    on('postgres_changes',{event:'*',schema:'public',table:'fz_posts'},refresh).
+    on('postgres_changes',{event:'*',schema:'public',table:'fz_likes'},refresh).
+    on('postgres_changes',{event:'*',schema:'public',table:'fz_comments'},refresh).
+    on('postgres_changes',{event:'*',schema:'public',table:'fz_users'},async()=>{
+      const {data:ua}=await sb.from('fz_users').select('id,username,bio,avatar_b64');
+      allUsers={}; (ua||[]).forEach(u=>allUsers[u.username]=u);
+      renderUsersBar(); renderNav();
+    }).subscribe();
+}
+
+async function refresh(){ await loadPosts(); renderPosts(); }
+
+async function loadPosts(){
+  const {data}=await sb.from('fz_posts')
+    .select('*, fz_likes(*), fz_comments(*, fz_users(username,avatar_b64))')
+    .order('created_at',{ascending:false});
+  posts=data||[];
+}
+
+// ── RENDER NAV ─────────────────────────
+function renderNav(){
+  const av=$('nav-avatar');
+  av.innerHTML=me.avatar_b64?`<img src="${me.avatar_b64}" alt="">`:ini(me.username);
+  $('nav-username').textContent='@'+me.username;
+}
+
+// ── RENDER USERS BAR ───────────────────
+function renderUsersBar(){
+  const bar=$('users-bar');
+  bar.innerHTML='<span class="users-bar-label">Amigos</span>';
+  const others=Object.values(allUsers).filter(u=>u.username!==me.username);
+  if(!others.length){ bar.innerHTML+='<span style="font-size:.8rem;color:var(--muted);font-style:italic;">Aún no hay más amigos.</span>'; return; }
+  others.forEach(u=>{
+    const c=document.createElement('div'); c.className='user-chip'; c.onclick=()=>openProfile(u.username);
+    c.innerHTML=`<div class="user-chip-av">${u.avatar_b64?`<img src="${u.avatar_b64}" alt="">`:ini(u.username)}</div><span class="user-chip-name">@${u.username}</span>`;
+    bar.appendChild(c);
   });
-  document.getElementById('form-login').classList.toggle('active', tab==='login');
-  document.getElementById('form-register').classList.toggle('active', tab==='register');
 }
 
-function previewRegAvatar(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    regAvatarData = ev.target.result;
-    const el = document.getElementById('reg-avatar-preview');
-    el.innerHTML = `<img src="${regAvatarData}" alt="">`;
-  };
-  reader.readAsDataURL(file);
-}
-
-function doRegister() {
-  const username = document.getElementById('reg-user').value.trim().toLowerCase().replace(/\s+/g,'');
-  const password = document.getElementById('reg-pass').value;
-  const bio = document.getElementById('reg-bio').value.trim();
-  const err = document.getElementById('reg-error');
-  err.style.display = 'none';
-
-  if (!username) { err.textContent = 'Elige un username.'; err.style.display='block'; return; }
-  if (username.length < 2) { err.textContent = 'El username debe tener al menos 2 caracteres.'; err.style.display='block'; return; }
-  if (!password || password.length < 4) { err.textContent = 'La contraseña debe tener al menos 4 caracteres.'; err.style.display='block'; return; }
-
-  const users = getUsers();
-  if (users[username]) { err.textContent = 'Ese username ya existe.'; err.style.display='block'; return; }
-
-  users[username] = { username, password, bio, avatar: regAvatarData };
-  saveUsers(users);
-  setCurrentUser(username);
-  loadFeed();
-}
-
-function doLogin() {
-  const username = document.getElementById('login-user').value.trim().toLowerCase();
-  const password = document.getElementById('login-pass').value;
-  const err = document.getElementById('login-error');
-  err.style.display = 'none';
-
-  const users = getUsers();
-  if (!users[username] || users[username].password !== password) {
-    err.textContent = 'Usuario o contraseña incorrectos.';
-    err.style.display = 'block';
-    return;
-  }
-  setCurrentUser(username);
-  loadFeed();
-}
-
-function doLogout() {
-  setCurrentUser(null);
-  document.getElementById('auth-screen').classList.add('active');
-  document.getElementById('feed-screen').classList.remove('active');
-  document.getElementById('login-user').value = '';
-  document.getElementById('login-pass').value = '';
-}
-
-// ───────────────────────────────────────────
-// FEED
-// ───────────────────────────────────────────
-let pendingPhotoData = null;
-
-function loadFeed() {
-  const cu = getCurrentUser();
-  if (!cu) return;
-  const users = getUsers();
-  const me = users[cu];
-
-  document.getElementById('auth-screen').classList.remove('active');
-  document.getElementById('feed-screen').classList.add('active');
-
-  // Nav
-  const navAv = document.getElementById('nav-avatar');
-  navAv.innerHTML = me.avatar ? `<img src="${me.avatar}" alt="">` : `${me.username[0].toUpperCase()}`;
-  document.getElementById('nav-username').textContent = '@' + me.username;
-
-  renderUsersBar();
-  renderPosts();
-}
-
-function renderUsersBar() {
-  const users = getUsers();
-  const cu = getCurrentUser();
-  const bar = document.getElementById('users-bar-inner');
-  bar.innerHTML = '<span class="users-bar-label">Amigos</span>';
-
-  const others = Object.values(users).filter(u => u.username !== cu);
-  if (others.length === 0) {
-    bar.innerHTML += '<span style="font-size:0.8rem;color:var(--muted);font-style:italic;">Aún no hay más amigos. ¡Invita a alguien!</span>';
-    return;
-  }
-  others.forEach(u => {
-    const chip = document.createElement('div');
-    chip.className = 'user-chip';
-    chip.onclick = () => openProfile(u.username);
-    chip.innerHTML = `
-      <div class="user-chip-avatar">${u.avatar ? `<img src="${u.avatar}" alt="">` : u.username[0].toUpperCase()}</div>
-      <span class="user-chip-name">@${u.username}</span>
-    `;
-    bar.appendChild(chip);
-  });
-}
-
-function renderPosts() {
-  const posts = getPosts();
-  const cu = getCurrentUser();
-  const users = getUsers();
-  const list = document.getElementById('posts-list');
-
-  if (posts.length === 0) {
-    list.innerHTML = `
-      <div class="empty-feed">
-        <span class="big-emoji">✉️</span>
-        <p>Nada por aquí todavía.<br>¡Sé el primero en publicar algo!</p>
-      </div>`;
-    return;
-  }
-
-  list.innerHTML = '';
-  const sorted = [...posts].reverse();
-  sorted.forEach(post => {
-    const author = users[post.author] || { username: post.author, avatar: null, bio: '' };
-    const liked = (post.likes || []).includes(cu);
-    const likesCount = (post.likes || []).length;
-    const commentsCount = (post.comments || []).length;
-
-    const card = document.createElement('div');
-    card.className = 'post-card';
-    card.id = `post-${post.id}`;
-
-    const deleteBtn = post.author === cu
-      ? `<button class="post-delete" onclick="deletePost('${post.id}')" title="Eliminar">🗑</button>`
-      : '';
-
-    const imageHtml = post.image
-      ? `<img class="post-image" src="${post.image}" alt="" loading="lazy">`
-      : '';
-
-    const textClass = post.image ? 'post-text' : 'post-text text-only';
-    const textHtml = post.text ? `<div class="${textClass}">${escapeHtml(post.text)}</div>` : '';
-
-    card.innerHTML = `
+// ── RENDER POSTS ───────────────────────
+function renderPosts(){
+  const list=$('posts-list');
+  if(!posts.length){ list.innerHTML=`<div class="empty-feed"><span class="big-emoji">✉️</span><p>Nada por aquí todavía.<br>¡Sé el primero en publicar!</p></div>`; return; }
+  list.innerHTML='';
+  posts.forEach(post=>{
+    const author=Object.values(allUsers).find(u=>u.id===post.user_id)||{username:'?',avatar_b64:null};
+    const myLike=(post.fz_likes||[]).find(l=>l.user_id===me.id);
+    const lc=(post.fz_likes||[]).length;
+    const cc=(post.fz_comments||[]).length;
+    const isOwner=post.user_id===me.id;
+    const card=document.createElement('div'); card.className='post-card'; card.id='post-'+post.id;
+    card.innerHTML=`
       <div class="post-header">
         <div class="post-user">
           <div class="post-avatar" onclick="openProfile('${author.username}')">
-            ${author.avatar ? `<img src="${author.avatar}" alt="">` : author.username[0].toUpperCase()}
+            ${author.avatar_b64?`<img src="${author.avatar_b64}" alt="">`:ini(author.username)}
           </div>
-          <div class="post-meta">
+          <div>
             <div class="post-username" onclick="openProfile('${author.username}')">@${author.username}</div>
-            <div class="post-time">${timeAgo(post.ts)}</div>
+            <div class="post-time">${timeAgo(post.created_at)}</div>
           </div>
         </div>
-        ${deleteBtn}
+        ${isOwner?`<button class="post-delete" onclick="deletePost('${post.id}')">🗑</button>`:''}
       </div>
-      ${imageHtml}
-      ${textHtml ? `<div class="post-body">${textHtml}</div>` : ''}
+      ${post.image_b64?`<img class="post-image" src="${post.image_b64}" alt="" loading="lazy">`:''}
+      ${post.text?`<div class="post-body"><div class="post-text${post.image_b64?'':' text-only'}">${esc(post.text)}</div></div>`:''}
       <div class="post-actions">
-        <button class="btn-like ${liked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
-          <span class="heart">${liked ? '❤️' : '🤍'}</span>
-          ${likesCount > 0 ? likesCount : ''} ${likesCount === 1 ? 'like' : likesCount > 1 ? 'likes' : 'Like'}
+        <button class="btn-like${myLike?' liked':''}" onclick="toggleLike('${post.id}','${myLike?myLike.id:''}')">
+          <span class="heart">${myLike?'❤️':'🤍'}</span>
+          ${lc>0?lc+' ':''}${lc===1?'like':lc>1?'likes':'Like'}
         </button>
         <button class="btn-comment-toggle" onclick="toggleComments('${post.id}')">
-          💬 ${commentsCount > 0 ? commentsCount : ''} ${commentsCount === 1 ? 'comentario' : commentsCount > 1 ? 'comentarios' : 'Comentar'}
+          💬 ${cc>0?cc+' ':''}${cc===1?'comentario':cc>1?'comentarios':'Comentar'}
         </button>
       </div>
-      <div class="comments-section" id="comments-${post.id}">
-        <div class="comment-list" id="comment-list-${post.id}"></div>
+      <div class="comments-section" id="cs-${post.id}">
+        <div class="comment-list" id="cl-${post.id}"></div>
         <div class="comment-form">
-          <input type="text" placeholder="Escribe un comentario..." id="comment-input-${post.id}" 
-            onkeydown="if(event.key==='Enter')addComment('${post.id}')">
+          <input type="text" placeholder="Escribe un comentario..." id="ci-${post.id}" onkeydown="if(event.key==='Enter')addComment('${post.id}')">
           <button class="btn-send-comment" onclick="addComment('${post.id}')">↵</button>
         </div>
-      </div>
-    `;
+      </div>`;
     list.appendChild(card);
-    renderComments(post.id);
+    renderComments(post);
   });
 }
 
-function renderComments(postId) {
-  const posts = getPosts();
-  const users = getUsers();
-  const post = posts.find(p => p.id === postId);
-  if (!post) return;
-  const list = document.getElementById(`comment-list-${postId}`);
-  if (!list) return;
-
-  const comments = post.comments || [];
-  if (comments.length === 0) {
-    list.innerHTML = '<p class="no-comments">Sin comentarios todavía.</p>';
-    return;
-  }
-  list.innerHTML = '';
-  comments.forEach(c => {
-    const u = users[c.author] || { username: c.author, avatar: null };
-    const div = document.createElement('div');
-    div.className = 'comment-item';
-    div.innerHTML = `
+function renderComments(post){
+  const el=$('cl-'+post.id); if(!el) return;
+  const cmts=post.fz_comments||[];
+  if(!cmts.length){ el.innerHTML='<p class="no-comments">Sin comentarios todavía.</p>'; return; }
+  el.innerHTML='';
+  cmts.forEach(c=>{
+    const u=c.fz_users||{username:'?',avatar_b64:null};
+    const d=document.createElement('div'); d.className='comment-item';
+    d.innerHTML=`
       <div class="comment-avatar" onclick="openProfile('${u.username}')">
-        ${u.avatar ? `<img src="${u.avatar}" alt="">` : u.username[0].toUpperCase()}
+        ${u.avatar_b64?`<img src="${u.avatar_b64}" alt="">`:ini(u.username)}
       </div>
-      <div class="comment-content">
+      <div>
         <span class="comment-user" onclick="openProfile('${u.username}')">@${u.username}</span>
-        <p class="comment-text">${escapeHtml(c.text)}</p>
-      </div>
-    `;
-    list.appendChild(div);
+        <p class="comment-text">${esc(c.text)}</p>
+      </div>`;
+    el.appendChild(d);
   });
 }
 
-// ───────────────────────────────────────────
-// COMPOSER
-// ───────────────────────────────────────────
-function previewPhoto(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    pendingPhotoData = ev.target.result;
-    document.getElementById('compose-preview-img').src = pendingPhotoData;
-    document.getElementById('compose-preview').style.display = 'block';
-  };
-  reader.readAsDataURL(file);
+// ── COMPOSER ───────────────────────────
+function previewPhoto(e){ readFile(e.target.files[0],d=>{ pendingPhoto=d; $('compose-preview-img').src=d; $('compose-preview').style.display='block'; }); }
+function removePhoto(){ pendingPhoto=null; $('compose-preview').style.display='none'; $('compose-preview-img').src=''; $('compose-photo').value=''; }
+
+async function submitPost(){
+  const text=$('compose-text').value.trim();
+  if(!text&&!pendingPhoto) return;
+  setBtn('btn-post',true);
+  await sb.from('fz_posts').insert({user_id:me.id,text:text||null,image_b64:pendingPhoto||null});
+  $('compose-text').value=''; removePhoto();
+  setBtn('btn-post',false);
+  await refresh();
 }
 
-function removePhoto() {
-  pendingPhotoData = null;
-  document.getElementById('compose-preview').style.display = 'none';
-  document.getElementById('compose-preview-img').src = '';
-  document.getElementById('compose-photo').value = '';
+// ── LIKES ──────────────────────────────
+async function toggleLike(postId,likeId){
+  if(likeId) await sb.from('fz_likes').delete().eq('id',likeId);
+  else await sb.from('fz_likes').insert({post_id:postId,user_id:me.id});
+  await refresh();
 }
 
-function submitPost() {
-  const text = document.getElementById('compose-text').value.trim();
-  if (!text && !pendingPhotoData) return;
-
-  const cu = getCurrentUser();
-  const posts = getPosts();
-  const post = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-    author: cu,
-    text,
-    image: pendingPhotoData || null,
-    likes: [],
-    comments: [],
-    ts: Date.now(),
-  };
-  posts.push(post);
-  savePosts(posts);
-
-  document.getElementById('compose-text').value = '';
-  removePhoto();
-  renderPosts();
+// ── COMMENTS ───────────────────────────
+function toggleComments(postId){
+  const s=$('cs-'+postId); s.classList.toggle('open');
+  if(s.classList.contains('open')) $('ci-'+postId)?.focus();
+}
+async function addComment(postId){
+  const inp=$('ci-'+postId); const text=inp.value.trim(); if(!text) return;
+  inp.value='';
+  await sb.from('fz_comments').insert({post_id:postId,user_id:me.id,text});
+  await refresh();
+  const s=$('cs-'+postId); if(s) s.classList.add('open');
 }
 
-// ───────────────────────────────────────────
-// INTERACTIONS
-// ───────────────────────────────────────────
-function toggleLike(postId) {
-  const cu = getCurrentUser();
-  const posts = getPosts();
-  const post = posts.find(p => p.id === postId);
-  if (!post) return;
-  post.likes = post.likes || [];
-  const idx = post.likes.indexOf(cu);
-  if (idx === -1) post.likes.push(cu);
-  else post.likes.splice(idx, 1);
-  savePosts(posts);
-
-  // Update just the like button
-  const liked = post.likes.includes(cu);
-  const btn = document.querySelector(`#post-${postId} .btn-like`);
-  if (btn) {
-    btn.className = `btn-like ${liked ? 'liked' : ''}`;
-    const lc = post.likes.length;
-    btn.innerHTML = `<span class="heart">${liked ? '❤️' : '🤍'}</span> ${lc > 0 ? lc : ''} ${lc === 1 ? 'like' : lc > 1 ? 'likes' : 'Like'}`;
-  }
+// ── DELETE ─────────────────────────────
+async function deletePost(postId){
+  if(!confirm('¿Eliminar este post?')) return;
+  await sb.from('fz_posts').delete().eq('id',postId);
+  await refresh();
 }
 
-function toggleComments(postId) {
-  const section = document.getElementById(`comments-${postId}`);
-  section.classList.toggle('open');
-  if (section.classList.contains('open')) {
-    document.getElementById(`comment-input-${postId}`)?.focus();
-  }
-}
-
-function addComment(postId) {
-  const input = document.getElementById(`comment-input-${postId}`);
-  const text = input.value.trim();
-  if (!text) return;
-  const cu = getCurrentUser();
-  const posts = getPosts();
-  const post = posts.find(p => p.id === postId);
-  if (!post) return;
-  post.comments = post.comments || [];
-  post.comments.push({ author: cu, text, ts: Date.now() });
-  savePosts(posts);
-  input.value = '';
-
-  // Update comment count button
-  const togBtn = document.querySelector(`#post-${postId} .btn-comment-toggle`);
-  if (togBtn) {
-    const cc = post.comments.length;
-    togBtn.innerHTML = `💬 ${cc > 0 ? cc : ''} ${cc === 1 ? 'comentario' : cc > 1 ? 'comentarios' : 'Comentar'}`;
-  }
-  renderComments(postId);
-}
-
-function deletePost(postId) {
-  if (!confirm('¿Eliminar este post?')) return;
-  const posts = getPosts().filter(p => p.id !== postId);
-  savePosts(posts);
-  renderPosts();
-}
-
-// ───────────────────────────────────────────
-// PROFILE MODAL
-// ───────────────────────────────────────────
-function openMyProfile() { openProfile(getCurrentUser(), true); }
-
-function openProfile(username, isMe = false) {
-  const users = getUsers();
-  const cu = getCurrentUser();
-  const u = users[username];
-  if (!u) return;
-  isMe = username === cu;
-
-  const posts = getPosts().filter(p => p.author === username);
-  const totalLikes = posts.reduce((a, p) => a + (p.likes || []).length, 0);
-
-  const modal = document.getElementById('profile-modal');
-  const content = document.getElementById('modal-content');
-
-  content.innerHTML = `
+// ── PROFILE MODAL ──────────────────────
+function openMyProfile(){ openProfile(me.username); }
+function openProfile(username){
+  const u=allUsers[username]; if(!u) return;
+  const isMe=username===me.username;
+  const up=posts.filter(p=>p.user_id===u.id);
+  const tl=up.reduce((a,p)=>a+(p.fz_likes||[]).length,0);
+  $('modal-content').innerHTML=`
     <div class="profile-view">
-      <div class="profile-big-avatar">
-        ${u.avatar ? `<img src="${u.avatar}" alt="">` : u.username[0].toUpperCase()}
-      </div>
+      <div class="profile-big-av">${u.avatar_b64?`<img src="${u.avatar_b64}" alt="">`:ini(u.username)}</div>
       <div class="profile-name">@${u.username}</div>
-      ${u.bio ? `<p class="profile-bio">${escapeHtml(u.bio)}</p>` : '<p class="profile-bio" style="opacity:0.5">Sin bio.</p>'}
+      <p class="profile-bio">${u.bio?esc(u.bio):'<span style="opacity:.45">Sin bio.</span>'}</p>
       <div class="profile-stats">
-        <div class="stat"><span class="stat-n">${posts.length}</span><span class="stat-l">Posts</span></div>
-        <div class="stat"><span class="stat-n">${totalLikes}</span><span class="stat-l">Likes</span></div>
+        <div class="stat"><span class="stat-n">${up.length}</span><span class="stat-l">Posts</span></div>
+        <div class="stat"><span class="stat-n">${tl}</span><span class="stat-l">Likes</span></div>
       </div>
-      ${isMe ? `<button class="btn-edit-profile" onclick="showEditProfile()">Editar perfil</button>` : ''}
-    </div>
-  `;
-
-  modal.classList.add('open');
+      ${isMe?`<button class="btn-edit-profile" onclick="showEditForm()">Editar perfil</button>`:''}
+    </div>`;
+  $('profile-modal').classList.add('open');
 }
 
-function showEditProfile() {
-  const cu = getCurrentUser();
-  const users = getUsers();
-  const me = users[cu];
-  const content = document.getElementById('modal-content');
-
-  content.innerHTML = `
-    <div class="profile-edit-form">
-      <h3>Editar perfil</h3>
+function showEditForm(){
+  const u=allUsers[me.username]||me;
+  $('modal-content').innerHTML=`
+    <div>
+      <p class="edit-form-title">Editar perfil</p>
       <div class="avatar-upload" style="margin-bottom:16px">
-        <div class="avatar-preview" id="edit-avatar-preview">
-          ${me.avatar ? `<img src="${me.avatar}" alt="">` : me.username[0].toUpperCase()}
-        </div>
+        <div class="avatar-preview" id="edit-av-prev">${u.avatar_b64?`<img src="${u.avatar_b64}" alt="">`:ini(u.username)}</div>
         <div>
-          <label class="btn-ghost" for="edit-avatar-file" style="font-size:0.82rem;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;">Cambiar foto</label>
-          <input type="file" id="edit-avatar-file" accept="image/*" style="display:none" onchange="previewEditAvatar(event)">
+          <label class="ghost-label" for="edit-av-file">Cambiar foto</label>
+          <input type="file" id="edit-av-file" accept="image/*" style="display:none" onchange="previewEditAv(event)">
         </div>
       </div>
-      <div class="field">
-        <label>Bio</label>
-        <textarea id="edit-bio" placeholder="Cuéntanos algo sobre ti...">${escapeHtml(me.bio || '')}</textarea>
-      </div>
-      <div class="field">
-        <label>Contraseña nueva (dejar vacío = no cambiar)</label>
-        <input type="password" id="edit-pass" placeholder="••••••">
-      </div>
-      <button class="btn-save-profile" onclick="saveProfile()">Guardar cambios</button>
-    </div>
-  `;
+      <div class="field"><label>Bio</label><textarea id="edit-bio" placeholder="Cuéntanos algo...">${esc(u.bio||'')}</textarea></div>
+      <div class="field"><label>Nueva contraseña (vacío = no cambiar)</label><input type="password" id="edit-pass" placeholder="••••••"></div>
+      <button class="btn-save" id="btn-save" onclick="saveProfile()">Guardar</button>
+    </div>`;
+}
+function previewEditAv(e){ readFile(e.target.files[0],d=>{ editAv=d; $('edit-av-prev').innerHTML=`<img src="${d}" alt="">`; }); }
+
+async function saveProfile(){
+  setBtn('btn-save',true);
+  const bio=$('edit-bio').value.trim();
+  const np=$('edit-pass').value;
+  const upd={bio};
+  if(editAv) upd.avatar_b64=editAv;
+  if(np&&np.length>=4) upd.password_hash=await sha256(np);
+  await sb.from('fz_users').update(upd).eq('id',me.id);
+  const {data:fresh}=await sb.from('fz_users').select('*').eq('id',me.id).single();
+  me=fresh; saveSession(fresh); allUsers[fresh.username]=fresh;
+  editAv=null; setBtn('btn-save',false);
+  closeModal(); renderNav(); renderUsersBar(); renderPosts();
 }
 
-let editAvatarData = null;
-function previewEditAvatar(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    editAvatarData = ev.target.result;
-    const el = document.getElementById('edit-avatar-preview');
-    el.innerHTML = `<img src="${editAvatarData}" alt="">`;
-  };
-  reader.readAsDataURL(file);
-}
+function closeModal(){ $('profile-modal').classList.remove('open'); editAv=null; }
+$('profile-modal').addEventListener('click',e=>{ if(e.target===$('profile-modal')) closeModal(); });
 
-function saveProfile() {
-  const cu = getCurrentUser();
-  const users = getUsers();
-  const bio = document.getElementById('edit-bio').value.trim();
-  const newPass = document.getElementById('edit-pass').value;
+// ── INIT ───────────────────────────────
+(async function(){
+  loader(true);
+  const ok=await tablesOk();
+  if(!ok){ showSetup(); return; }
 
-  if (editAvatarData) users[cu].avatar = editAvatarData;
-  users[cu].bio = bio;
-  if (newPass && newPass.length >= 4) users[cu].password = newPass;
-  saveUsers(users);
-  editAvatarData = null;
-
-  // Refresh nav
-  const navAv = document.getElementById('nav-avatar');
-  navAv.innerHTML = users[cu].avatar ? `<img src="${users[cu].avatar}" alt="">` : users[cu].username[0].toUpperCase();
-
-  closeModal();
-  renderPosts();
-  renderUsersBar();
-}
-
-function closeModal() {
-  document.getElementById('profile-modal').classList.remove('open');
-  editAvatarData = null;
-}
-
-document.getElementById('profile-modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('profile-modal')) closeModal();
-});
-
-// ───────────────────────────────────────────
-// UTILS
-// ───────────────────────────────────────────
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
-}
-
-function timeAgo(ts) {
-  const diff = Date.now() - ts;
-  const m = Math.floor(diff / 60000);
-  const h = Math.floor(m / 60);
-  const d = Math.floor(h / 24);
-  if (m < 1) return 'justo ahora';
-  if (m < 60) return `hace ${m} min`;
-  if (h < 24) return `hace ${h}h`;
-  if (d < 7) return `hace ${d}d`;
-  return new Date(ts).toLocaleDateString('es-CL', { day:'numeric', month:'short' });
-}
-
-// ───────────────────────────────────────────
-// INIT
-// ───────────────────────────────────────────
-(function init() {
-  const cu = getCurrentUser();
-  if (cu && getUsers()[cu]) loadFeed();
-  // Enter key shortcuts
-  document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-  document.getElementById('login-user').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  const ses=JSON.parse(localStorage.getItem('fz_ses')||'null');
+  if(ses){
+    const {data:u}=await sb.from('fz_users').select('*').eq('id',ses.id).maybeSingle();
+    if(u){ me=u; await boot(); return; }
+  }
+  loader(false);
+  $('auth-screen').classList.add('active');
+  $('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  $('login-user').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 })();
 </script>
 </body>

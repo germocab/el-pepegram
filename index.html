@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Friendzone — tu rincón privado</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f5f0e8;
+    --warm: #ede5d4;
+    --ink: #1a1510;
+    --muted: #7a6e60;
+    --accent: #c84b2f;
+    --accent2: #3a6b4a;
+    --card: #faf7f2;
+    --border: #d4c9b5;
+    --shadow: rgba(26,21,16,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ─── PANTALLAS ─── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ─── AUTH ─── */
+  #auth-screen {
+    min-height: 100vh;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: var(--cream);
+    position: relative;
+    overflow: hidden;
+  }
+  #auth-screen.active { display: flex; }
+
+  #auth-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 80%, rgba(200,75,47,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 80% 20%, rgba(58,107,74,0.08) 0%, transparent 60%);
+  }
+
+  .auth-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 48px 44px;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    box-shadow: 0 4px 40px var(--shadow);
+  }
+
+  .auth-box h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+
+  .auth-box .tagline {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 32px;
+  }
+
+  .auth-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+
+  .auth-tab {
+    background: none;
+    border: none;
+    padding: 10px 20px 10px 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--muted);
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+  }
+  .auth-tab.active {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .auth-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .auth-form { display: none; }
+  .auth-form.active { display: block; }
+
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .field input, .field textarea {
+    width: 100%;
+    background: var(--warm);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 10px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .field input:focus, .field textarea:focus {
+    border-color: var(--ink);
+  }
+  .field textarea { resize: vertical; min-height: 80px; }
+
+  .avatar-upload {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .avatar-preview {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--warm);
+    border: 2px dashed var(--border);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+  }
+  .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar-upload label.btn-ghost {
+    font-size: 0.82rem;
+    color: var(--muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 11px 28px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    border: none;
+    cursor: pointer;
+    transition: all 0.18s;
+    border-radius: 2px;
+  }
+  .btn-primary {
+    background: var(--ink);
+    color: var(--cream);
+    width: 100%;
+  }
+  .btn-primary:hover { background: #2d261e; }
+
+  .error-msg {
+    color: var(--accent);
+    font-size: 0.82rem;
+    margin-bottom: 12px;
+    display: none;
+  }
+
+  /* ─── FEED ─── */
+  #feed-screen {
+    min-height: 100vh;
+    background: var(--cream);
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 58px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-style: italic;
+    letter-spacing: -0.01em;
+  }
+  .nav-brand span { color: var(--accent); }
+
+  .nav-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .nav-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--warm);
+    border: 2px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .nav-username {
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .nav-username:hover { color: var(--accent); }
+
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.18s;
+  }
+  .btn-logout:hover { border-color: var(--ink); color: var(--ink); }
+
+  /* ─── LAYOUT ─── */
+  .feed-layout {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 32px 20px;
+  }
+
+  /* ─── COMPOSER ─── */
+  .composer {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 20px;
+    margin-bottom: 28px;
+    box-shadow: 0 2px 12px var(--shadow);
+  }
+
+  .composer-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    margin-bottom: 14px;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .composer textarea {
+    width: 100%;
+    background: var(--warm);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    color: var(--ink);
+    resize: none;
+    min-height: 90px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .composer textarea:focus { border-color: var(--ink); }
+
+  .composer-photo-preview {
+    margin: 12px 0;
+    position: relative;
+    display: none;
+  }
+  .composer-photo-preview img {
+    width: 100%;
+    border-radius: 2px;
+    max-height: 280px;
+    object-fit: cover;
+  }
+  .remove-photo {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(26,21,16,0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .composer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    gap: 10px;
+  }
+
+  .composer-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-photo-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    cursor: pointer;
+    background: none;
+    transition: all 0.18s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-photo-label:hover { border-color: var(--ink); color: var(--ink); }
+
+  .btn-post {
+    background: var(--accent);
+    color: white;
+    padding: 9px 22px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 2px;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.18s;
+  }
+  .btn-post:hover { background: #a83d25; }
+
+  /* ─── POSTS ─── */
+  .posts-list { display: flex; flex-direction: column; gap: 20px; }
+
+  .post-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    box-shadow: 0 2px 12px var(--shadow);
+    overflow: hidden;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+  }
+
+  .post-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .post-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--warm);
+    border: 2px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .post-avatar:hover { border-color: var(--accent); }
+
+  .post-meta {}
+  .post-username {
+    font-weight: 500;
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+  .post-username:hover { color: var(--accent); }
+  .post-time {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .post-delete {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .post-card:hover .post-delete { opacity: 1; }
+  .post-delete:hover { color: var(--accent); }
+
+  .post-image {
+    width: 100%;
+    max-height: 420px;
+    object-fit: cover;
+    display: block;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .post-body {
+    padding: 12px 16px;
+  }
+  .post-text {
+    font-size: 0.91rem;
+    line-height: 1.6;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .post-text.text-only {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    font-style: italic;
+    padding: 8px 0;
+  }
+
+  .post-actions {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 8px 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-like {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 7px 12px;
+    font-size: 0.83rem;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    border-radius: 2px;
+    transition: all 0.18s;
+  }
+  .btn-like:hover { background: var(--warm); color: var(--accent); }
+  .btn-like.liked { color: var(--accent); font-weight: 500; }
+  .btn-like .heart { font-size: 1rem; transition: transform 0.2s; }
+  .btn-like.liked .heart { transform: scale(1.2); }
+
+  .btn-comment-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 7px 12px;
+    font-size: 0.83rem;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    border-radius: 2px;
+    transition: all 0.18s;
+  }
+  .btn-comment-toggle:hover { background: var(--warm); color: var(--ink); }
+
+  .comments-section {
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    background: var(--warm);
+    display: none;
+  }
+  .comments-section.open { display: block; }
+
+  .comment-list { margin-bottom: 12px; }
+  .comment-item {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .comment-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--border);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .comment-content {}
+  .comment-user {
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .comment-user:hover { color: var(--accent); }
+  .comment-text {
+    font-size: 0.83rem;
+    color: var(--ink);
+    line-height: 1.5;
+    margin-top: 1px;
+  }
+  .no-comments {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 10px;
+  }
+
+  .comment-form {
+    display: flex;
+    gap: 8px;
+  }
+  .comment-form input {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.83rem;
+    color: var(--ink);
+    outline: none;
+  }
+  .comment-form input:focus { border-color: var(--ink); }
+  .btn-send-comment {
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.18s;
+  }
+  .btn-send-comment:hover { background: var(--accent); }
+
+  .empty-feed {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-feed .big-emoji { font-size: 2.5rem; display: block; margin-bottom: 12px; }
+  .empty-feed p { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1rem; }
+
+  /* ─── PROFILE MODAL ─── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,21,16,0.5);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 32px;
+    max-width: 420px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 8px 60px rgba(26,21,16,0.18);
+    animation: modalIn 0.25s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    background: none; border: none;
+    font-size: 1.3rem; cursor: pointer;
+    color: var(--muted);
+    transition: color 0.18s;
+  }
+  .modal-close:hover { color: var(--ink); }
+
+  .profile-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .profile-big-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--warm);
+    border: 3px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 14px;
+  }
+  .profile-big-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .profile-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 4px;
+  }
+  .profile-bio {
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    font-style: italic;
+    max-width: 300px;
+  }
+  .profile-stats {
+    display: flex;
+    gap: 24px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    width: 100%;
+    justify-content: center;
+  }
+  .stat { text-align: center; }
+  .stat-n { font-weight: 600; font-size: 1.1rem; display: block; }
+  .stat-l { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .profile-edit-form { width: 100%; }
+  .profile-edit-form h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    margin-bottom: 18px;
+  }
+  .btn-edit-profile {
+    margin-top: 18px;
+    width: 100%;
+    background: none;
+    border: 1px solid var(--border);
+    padding: 9px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.18s;
+  }
+  .btn-edit-profile:hover { border-color: var(--ink); color: var(--ink); }
+  .btn-save-profile {
+    margin-top: 14px;
+    width: 100%;
+    background: var(--accent2);
+    color: white;
+    border: none;
+    padding: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.86rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.18s;
+  }
+  .btn-save-profile:hover { background: #2e5339; }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--cream); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ─── USERS SIDEBAR hint ─── */
+  .users-bar {
+    max-width: 640px;
+    margin: 0 auto 0;
+    padding: 0 20px 20px;
+  }
+  .users-bar-inner {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .users-bar-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--warm);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px 4px 4px;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .user-chip:hover { border-color: var(--ink); }
+  .user-chip-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+  }
+  .user-chip-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .user-chip-name { font-size: 0.8rem; font-weight: 500; }
+
+  @media (max-width: 480px) {
+    .auth-box { padding: 30px 22px; }
+    nav { padding: 0 14px; }
+    .feed-layout { padding: 20px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── AUTH ─── -->
+<div id="auth-screen" class="active">
+  <div class="auth-box">
+    <h1>Friendzone</h1>
+    <p class="tagline">Solo para los que importan.</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Entrar</button>
+      <button class="auth-tab" onclick="switchTab('register')">Crear cuenta</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="form-login" class="auth-form active">
+      <p id="login-error" class="error-msg"></p>
+      <div class="field">
+        <label>Usuario</label>
+        <input type="text" id="login-user" placeholder="tu username" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="login-pass" placeholder="••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Entrar</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="form-register" class="auth-form">
+      <p id="reg-error" class="error-msg"></p>
+      <div class="avatar-upload">
+        <div class="avatar-preview" id="reg-avatar-preview">😊</div>
+        <div>
+          <label class="btn-ghost" for="reg-avatar-file">Subir foto de perfil</label>
+          <input type="file" id="reg-avatar-file" accept="image/*" style="display:none" onchange="previewRegAvatar(event)">
+          <p style="font-size:0.75rem;color:var(--muted);margin-top:4px;">Opcional</p>
+        </div>
+      </div>
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="reg-user" placeholder="@tuapodo" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="reg-pass" placeholder="••••••" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Bio</label>
+        <textarea id="reg-bio" placeholder="Cuéntanos algo sobre ti..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="doRegister()">Crear cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── FEED ─── -->
+<div id="feed-screen" class="screen">
+  <nav>
+    <span class="nav-brand">Friend<span>zone</span></span>
+    <div class="nav-user">
+      <div class="nav-avatar" id="nav-avatar" onclick="openMyProfile()"></div>
+      <span class="nav-username" id="nav-username" onclick="openMyProfile()"></span>
+      <button class="btn-logout" onclick="doLogout()">Salir</button>
+    </div>
+  </nav>
+
+  <!-- Amigos en línea -->
+  <div class="users-bar">
+    <div class="users-bar-inner" id="users-bar-inner">
+      <span class="users-bar-label">Amigos</span>
+    </div>
+  </div>
+
+  <div class="feed-layout">
+    <!-- Composer -->
+    <div class="composer">
+      <p class="composer-header">¿Qué hay de nuevo?</p>
+      <textarea id="compose-text" placeholder="Comparte algo con tus amigos..."></textarea>
+      <div class="composer-photo-preview" id="compose-preview">
+        <img id="compose-preview-img" src="" alt="">
+        <button class="remove-photo" onclick="removePhoto()">✕</button>
+      </div>
+      <div class="composer-actions">
+        <div class="composer-left">
+          <label class="btn-photo-label" for="compose-photo">
+            📷 Foto
+          </label>
+          <input type="file" id="compose-photo" accept="image/*" style="display:none" onchange="previewPhoto(event)">
+        </div>
+        <button class="btn-post" onclick="submitPost()">Publicar</button>
+      </div>
+    </div>
+
+    <!-- Posts -->
+    <div class="posts-list" id="posts-list"></div>
+  </div>
+</div>
+
+<!-- ─── PROFILE MODAL ─── -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+// ───────────────────────────────────────────
+// STORAGE helpers
+// ───────────────────────────────────────────
+const DB = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } },
+  set: (k,v) => localStorage.setItem(k, JSON.stringify(v)),
+};
+
+function getUsers() { return DB.get('fz_users') || {}; }
+function saveUsers(u) { DB.set('fz_users', u); }
+function getPosts() { return DB.get('fz_posts') || []; }
+function savePosts(p) { DB.set('fz_posts', p); }
+function getCurrentUser() { return DB.get('fz_current'); }
+function setCurrentUser(u) { DB.set('fz_current', u); }
+
+// ───────────────────────────────────────────
+// AUTH
+// ───────────────────────────────────────────
+let regAvatarData = null;
+
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => {
+    t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register'));
+  });
+  document.getElementById('form-login').classList.toggle('active', tab==='login');
+  document.getElementById('form-register').classList.toggle('active', tab==='register');
+}
+
+function previewRegAvatar(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    regAvatarData = ev.target.result;
+    const el = document.getElementById('reg-avatar-preview');
+    el.innerHTML = `<img src="${regAvatarData}" alt="">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function doRegister() {
+  const username = document.getElementById('reg-user').value.trim().toLowerCase().replace(/\s+/g,'');
+  const password = document.getElementById('reg-pass').value;
+  const bio = document.getElementById('reg-bio').value.trim();
+  const err = document.getElementById('reg-error');
+  err.style.display = 'none';
+
+  if (!username) { err.textContent = 'Elige un username.'; err.style.display='block'; return; }
+  if (username.length < 2) { err.textContent = 'El username debe tener al menos 2 caracteres.'; err.style.display='block'; return; }
+  if (!password || password.length < 4) { err.textContent = 'La contraseña debe tener al menos 4 caracteres.'; err.style.display='block'; return; }
+
+  const users = getUsers();
+  if (users[username]) { err.textContent = 'Ese username ya existe.'; err.style.display='block'; return; }
+
+  users[username] = { username, password, bio, avatar: regAvatarData };
+  saveUsers(users);
+  setCurrentUser(username);
+  loadFeed();
+}
+
+function doLogin() {
+  const username = document.getElementById('login-user').value.trim().toLowerCase();
+  const password = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+  err.style.display = 'none';
+
+  const users = getUsers();
+  if (!users[username] || users[username].password !== password) {
+    err.textContent = 'Usuario o contraseña incorrectos.';
+    err.style.display = 'block';
+    return;
+  }
+  setCurrentUser(username);
+  loadFeed();
+}
+
+function doLogout() {
+  setCurrentUser(null);
+  document.getElementById('auth-screen').classList.add('active');
+  document.getElementById('feed-screen').classList.remove('active');
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+// ───────────────────────────────────────────
+// FEED
+// ───────────────────────────────────────────
+let pendingPhotoData = null;
+
+function loadFeed() {
+  const cu = getCurrentUser();
+  if (!cu) return;
+  const users = getUsers();
+  const me = users[cu];
+
+  document.getElementById('auth-screen').classList.remove('active');
+  document.getElementById('feed-screen').classList.add('active');
+
+  // Nav
+  const navAv = document.getElementById('nav-avatar');
+  navAv.innerHTML = me.avatar ? `<img src="${me.avatar}" alt="">` : `${me.username[0].toUpperCase()}`;
+  document.getElementById('nav-username').textContent = '@' + me.username;
+
+  renderUsersBar();
+  renderPosts();
+}
+
+function renderUsersBar() {
+  const users = getUsers();
+  const cu = getCurrentUser();
+  const bar = document.getElementById('users-bar-inner');
+  bar.innerHTML = '<span class="users-bar-label">Amigos</span>';
+
+  const others = Object.values(users).filter(u => u.username !== cu);
+  if (others.length === 0) {
+    bar.innerHTML += '<span style="font-size:0.8rem;color:var(--muted);font-style:italic;">Aún no hay más amigos. ¡Invita a alguien!</span>';
+    return;
+  }
+  others.forEach(u => {
+    const chip = document.createElement('div');
+    chip.className = 'user-chip';
+    chip.onclick = () => openProfile(u.username);
+    chip.innerHTML = `
+      <div class="user-chip-avatar">${u.avatar ? `<img src="${u.avatar}" alt="">` : u.username[0].toUpperCase()}</div>
+      <span class="user-chip-name">@${u.username}</span>
+    `;
+    bar.appendChild(chip);
+  });
+}
+
+function renderPosts() {
+  const posts = getPosts();
+  const cu = getCurrentUser();
+  const users = getUsers();
+  const list = document.getElementById('posts-list');
+
+  if (posts.length === 0) {
+    list.innerHTML = `
+      <div class="empty-feed">
+        <span class="big-emoji">✉️</span>
+        <p>Nada por aquí todavía.<br>¡Sé el primero en publicar algo!</p>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  const sorted = [...posts].reverse();
+  sorted.forEach(post => {
+    const author = users[post.author] || { username: post.author, avatar: null, bio: '' };
+    const liked = (post.likes || []).includes(cu);
+    const likesCount = (post.likes || []).length;
+    const commentsCount = (post.comments || []).length;
+
+    const card = document.createElement('div');
+    card.className = 'post-card';
+    card.id = `post-${post.id}`;
+
+    const deleteBtn = post.author === cu
+      ? `<button class="post-delete" onclick="deletePost('${post.id}')" title="Eliminar">🗑</button>`
+      : '';
+
+    const imageHtml = post.image
+      ? `<img class="post-image" src="${post.image}" alt="" loading="lazy">`
+      : '';
+
+    const textClass = post.image ? 'post-text' : 'post-text text-only';
+    const textHtml = post.text ? `<div class="${textClass}">${escapeHtml(post.text)}</div>` : '';
+
+    card.innerHTML = `
+      <div class="post-header">
+        <div class="post-user">
+          <div class="post-avatar" onclick="openProfile('${author.username}')">
+            ${author.avatar ? `<img src="${author.avatar}" alt="">` : author.username[0].toUpperCase()}
+          </div>
+          <div class="post-meta">
+            <div class="post-username" onclick="openProfile('${author.username}')">@${author.username}</div>
+            <div class="post-time">${timeAgo(post.ts)}</div>
+          </div>
+        </div>
+        ${deleteBtn}
+      </div>
+      ${imageHtml}
+      ${textHtml ? `<div class="post-body">${textHtml}</div>` : ''}
+      <div class="post-actions">
+        <button class="btn-like ${liked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
+          <span class="heart">${liked ? '❤️' : '🤍'}</span>
+          ${likesCount > 0 ? likesCount : ''} ${likesCount === 1 ? 'like' : likesCount > 1 ? 'likes' : 'Like'}
+        </button>
+        <button class="btn-comment-toggle" onclick="toggleComments('${post.id}')">
+          💬 ${commentsCount > 0 ? commentsCount : ''} ${commentsCount === 1 ? 'comentario' : commentsCount > 1 ? 'comentarios' : 'Comentar'}
+        </button>
+      </div>
+      <div class="comments-section" id="comments-${post.id}">
+        <div class="comment-list" id="comment-list-${post.id}"></div>
+        <div class="comment-form">
+          <input type="text" placeholder="Escribe un comentario..." id="comment-input-${post.id}" 
+            onkeydown="if(event.key==='Enter')addComment('${post.id}')">
+          <button class="btn-send-comment" onclick="addComment('${post.id}')">↵</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+    renderComments(post.id);
+  });
+}
+
+function renderComments(postId) {
+  const posts = getPosts();
+  const users = getUsers();
+  const post = posts.find(p => p.id === postId);
+  if (!post) return;
+  const list = document.getElementById(`comment-list-${postId}`);
+  if (!list) return;
+
+  const comments = post.comments || [];
+  if (comments.length === 0) {
+    list.innerHTML = '<p class="no-comments">Sin comentarios todavía.</p>';
+    return;
+  }
+  list.innerHTML = '';
+  comments.forEach(c => {
+    const u = users[c.author] || { username: c.author, avatar: null };
+    const div = document.createElement('div');
+    div.className = 'comment-item';
+    div.innerHTML = `
+      <div class="comment-avatar" onclick="openProfile('${u.username}')">
+        ${u.avatar ? `<img src="${u.avatar}" alt="">` : u.username[0].toUpperCase()}
+      </div>
+      <div class="comment-content">
+        <span class="comment-user" onclick="openProfile('${u.username}')">@${u.username}</span>
+        <p class="comment-text">${escapeHtml(c.text)}</p>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ───────────────────────────────────────────
+// COMPOSER
+// ───────────────────────────────────────────
+function previewPhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    pendingPhotoData = ev.target.result;
+    document.getElementById('compose-preview-img').src = pendingPhotoData;
+    document.getElementById('compose-preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto() {
+  pendingPhotoData = null;
+  document.getElementById('compose-preview').style.display = 'none';
+  document.getElementById('compose-preview-img').src = '';
+  document.getElementById('compose-photo').value = '';
+}
+
+function submitPost() {
+  const text = document.getElementById('compose-text').value.trim();
+  if (!text && !pendingPhotoData) return;
+
+  const cu = getCurrentUser();
+  const posts = getPosts();
+  const post = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    author: cu,
+    text,
+    image: pendingPhotoData || null,
+    likes: [],
+    comments: [],
+    ts: Date.now(),
+  };
+  posts.push(post);
+  savePosts(posts);
+
+  document.getElementById('compose-text').value = '';
+  removePhoto();
+  renderPosts();
+}
+
+// ───────────────────────────────────────────
+// INTERACTIONS
+// ───────────────────────────────────────────
+function toggleLike(postId) {
+  const cu = getCurrentUser();
+  const posts = getPosts();
+  const post = posts.find(p => p.id === postId);
+  if (!post) return;
+  post.likes = post.likes || [];
+  const idx = post.likes.indexOf(cu);
+  if (idx === -1) post.likes.push(cu);
+  else post.likes.splice(idx, 1);
+  savePosts(posts);
+
+  // Update just the like button
+  const liked = post.likes.includes(cu);
+  const btn = document.querySelector(`#post-${postId} .btn-like`);
+  if (btn) {
+    btn.className = `btn-like ${liked ? 'liked' : ''}`;
+    const lc = post.likes.length;
+    btn.innerHTML = `<span class="heart">${liked ? '❤️' : '🤍'}</span> ${lc > 0 ? lc : ''} ${lc === 1 ? 'like' : lc > 1 ? 'likes' : 'Like'}`;
+  }
+}
+
+function toggleComments(postId) {
+  const section = document.getElementById(`comments-${postId}`);
+  section.classList.toggle('open');
+  if (section.classList.contains('open')) {
+    document.getElementById(`comment-input-${postId}`)?.focus();
+  }
+}
+
+function addComment(postId) {
+  const input = document.getElementById(`comment-input-${postId}`);
+  const text = input.value.trim();
+  if (!text) return;
+  const cu = getCurrentUser();
+  const posts = getPosts();
+  const post = posts.find(p => p.id === postId);
+  if (!post) return;
+  post.comments = post.comments || [];
+  post.comments.push({ author: cu, text, ts: Date.now() });
+  savePosts(posts);
+  input.value = '';
+
+  // Update comment count button
+  const togBtn = document.querySelector(`#post-${postId} .btn-comment-toggle`);
+  if (togBtn) {
+    const cc = post.comments.length;
+    togBtn.innerHTML = `💬 ${cc > 0 ? cc : ''} ${cc === 1 ? 'comentario' : cc > 1 ? 'comentarios' : 'Comentar'}`;
+  }
+  renderComments(postId);
+}
+
+function deletePost(postId) {
+  if (!confirm('¿Eliminar este post?')) return;
+  const posts = getPosts().filter(p => p.id !== postId);
+  savePosts(posts);
+  renderPosts();
+}
+
+// ───────────────────────────────────────────
+// PROFILE MODAL
+// ───────────────────────────────────────────
+function openMyProfile() { openProfile(getCurrentUser(), true); }
+
+function openProfile(username, isMe = false) {
+  const users = getUsers();
+  const cu = getCurrentUser();
+  const u = users[username];
+  if (!u) return;
+  isMe = username === cu;
+
+  const posts = getPosts().filter(p => p.author === username);
+  const totalLikes = posts.reduce((a, p) => a + (p.likes || []).length, 0);
+
+  const modal = document.getElementById('profile-modal');
+  const content = document.getElementById('modal-content');
+
+  content.innerHTML = `
+    <div class="profile-view">
+      <div class="profile-big-avatar">
+        ${u.avatar ? `<img src="${u.avatar}" alt="">` : u.username[0].toUpperCase()}
+      </div>
+      <div class="profile-name">@${u.username}</div>
+      ${u.bio ? `<p class="profile-bio">${escapeHtml(u.bio)}</p>` : '<p class="profile-bio" style="opacity:0.5">Sin bio.</p>'}
+      <div class="profile-stats">
+        <div class="stat"><span class="stat-n">${posts.length}</span><span class="stat-l">Posts</span></div>
+        <div class="stat"><span class="stat-n">${totalLikes}</span><span class="stat-l">Likes</span></div>
+      </div>
+      ${isMe ? `<button class="btn-edit-profile" onclick="showEditProfile()">Editar perfil</button>` : ''}
+    </div>
+  `;
+
+  modal.classList.add('open');
+}
+
+function showEditProfile() {
+  const cu = getCurrentUser();
+  const users = getUsers();
+  const me = users[cu];
+  const content = document.getElementById('modal-content');
+
+  content.innerHTML = `
+    <div class="profile-edit-form">
+      <h3>Editar perfil</h3>
+      <div class="avatar-upload" style="margin-bottom:16px">
+        <div class="avatar-preview" id="edit-avatar-preview">
+          ${me.avatar ? `<img src="${me.avatar}" alt="">` : me.username[0].toUpperCase()}
+        </div>
+        <div>
+          <label class="btn-ghost" for="edit-avatar-file" style="font-size:0.82rem;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;">Cambiar foto</label>
+          <input type="file" id="edit-avatar-file" accept="image/*" style="display:none" onchange="previewEditAvatar(event)">
+        </div>
+      </div>
+      <div class="field">
+        <label>Bio</label>
+        <textarea id="edit-bio" placeholder="Cuéntanos algo sobre ti...">${escapeHtml(me.bio || '')}</textarea>
+      </div>
+      <div class="field">
+        <label>Contraseña nueva (dejar vacío = no cambiar)</label>
+        <input type="password" id="edit-pass" placeholder="••••••">
+      </div>
+      <button class="btn-save-profile" onclick="saveProfile()">Guardar cambios</button>
+    </div>
+  `;
+}
+
+let editAvatarData = null;
+function previewEditAvatar(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    editAvatarData = ev.target.result;
+    const el = document.getElementById('edit-avatar-preview');
+    el.innerHTML = `<img src="${editAvatarData}" alt="">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveProfile() {
+  const cu = getCurrentUser();
+  const users = getUsers();
+  const bio = document.getElementById('edit-bio').value.trim();
+  const newPass = document.getElementById('edit-pass').value;
+
+  if (editAvatarData) users[cu].avatar = editAvatarData;
+  users[cu].bio = bio;
+  if (newPass && newPass.length >= 4) users[cu].password = newPass;
+  saveUsers(users);
+  editAvatarData = null;
+
+  // Refresh nav
+  const navAv = document.getElementById('nav-avatar');
+  navAv.innerHTML = users[cu].avatar ? `<img src="${users[cu].avatar}" alt="">` : users[cu].username[0].toUpperCase();
+
+  closeModal();
+  renderPosts();
+  renderUsersBar();
+}
+
+function closeModal() {
+  document.getElementById('profile-modal').classList.remove('open');
+  editAvatarData = null;
+}
+
+document.getElementById('profile-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('profile-modal')) closeModal();
+});
+
+// ───────────────────────────────────────────
+// UTILS
+// ───────────────────────────────────────────
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (m < 1) return 'justo ahora';
+  if (m < 60) return `hace ${m} min`;
+  if (h < 24) return `hace ${h}h`;
+  if (d < 7) return `hace ${d}d`;
+  return new Date(ts).toLocaleDateString('es-CL', { day:'numeric', month:'short' });
+}
+
+// ───────────────────────────────────────────
+// INIT
+// ───────────────────────────────────────────
+(function init() {
+  const cu = getCurrentUser();
+  if (cu && getUsers()[cu]) loadFeed();
+  // Enter key shortcuts
+  document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  document.getElementById('login-user').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+})();
+</script>
+</body>
+</html>

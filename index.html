@@ -222,7 +222,7 @@ nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;
   <div class="feed-layout">
     <div class="composer">
       <p class="composer-header">¿Qué hay de nuevo?</p>
-      <textarea id="compose-text" placeholder="Comparte algo con tus amigos..."></textarea>
+      <textarea id="compose-text" placeholder="Comparte algo con los kbros..."></textarea>
       <div class="compose-preview" id="compose-preview">
         <img id="compose-preview-img" src="" alt="">
         <button class="remove-photo" onclick="removePhoto()">✕</button>
@@ -448,7 +448,7 @@ function renderUsersBar(){
   const bar=$('users-bar');
   bar.innerHTML='<span class="users-bar-label">Amigos</span>';
   const others=Object.values(allUsers).filter(u=>u.username!==me.username);
-  if(!others.length){ bar.innerHTML+='<span style="font-size:.8rem;color:var(--muted);font-style:italic;">Aún no hay más amigos.</span>'; return; }
+  if(!others.length){ bar.innerHTML+='<span style="font-size:.8rem;color:var(--muted);font-style:italic;">Jajajaja, no tienes amigos.</span>'; return; }
   others.forEach(u=>{
     const c=document.createElement('div'); c.className='user-chip'; c.onclick=()=>openProfile(u.username);
     c.innerHTML=`<div class="user-chip-av">${u.avatar_b64?`<img src="${u.avatar_b64}" alt="">`:ini(u.username)}</div><span class="user-chip-name">@${u.username}</span>`;

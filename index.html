@@ -56,7 +56,7 @@ img{display:block;max-width:100%;}
 .btn-primary:disabled,.btn-post:disabled,.btn-save:disabled{opacity:.5;cursor:not-allowed;}
 .error-msg{color:var(--accent);font-size:.82rem;margin-bottom:12px;display:none;}
 
-#feed-screen{padding-bottom:calc(60px + var(--safe-b));}
+#feed-screen{padding-bottom:calc(80px + var(--safe-b));}
 nav{background:rgba(250,247,242,.92);border-bottom:1px solid var(--border);padding:0 16px;padding-top:var(--safe-t);display:flex;align-items:center;justify-content:space-between;height:calc(var(--nav-h) + var(--safe-t));position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 .nav-brand{font-family:'Playfair Display',serif;font-size:1.25rem;font-style:italic;}
 .nav-brand span{color:var(--accent);}
@@ -90,6 +90,8 @@ nav{background:rgba(250,247,242,.92);border-bottom:1px solid var(--border);paddi
 .no-friends-msg{font-size:.8rem;color:var(--muted);font-style:italic;}
 
 .feed-layout{padding:12px 0 20px;}
+
+/* ── DESKTOP COMPOSER (hidden on mobile) ── */
 .composer{background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:14px 16px;margin-bottom:16px;}
 .composer-row{display:flex;gap:10px;align-items:flex-start;}
 .composer-avatar{width:38px;height:38px;border-radius:50%;background:var(--warm);border:2px solid var(--border);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:600;color:var(--muted);}
@@ -109,6 +111,38 @@ nav{background:rgba(250,247,242,.92);border-bottom:1px solid var(--border);paddi
 .btn-post{background:var(--accent);color:#fff;padding:9px 20px;font-size:.84rem;font-weight:500;border-radius:20px;border:none;cursor:pointer;transition:all .18s;touch-action:manipulation;}
 .btn-post:active{background:#a83d25;transform:scale(.97);}
 
+/* ── FAB (mobile only) ── */
+.fab{display:none;position:fixed;bottom:calc(24px + var(--safe-b));right:20px;z-index:150;width:58px;height:58px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:1.6rem;line-height:1;cursor:pointer;box-shadow:0 4px 20px rgba(200,75,47,.45),0 2px 6px rgba(26,21,16,.18);transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;touch-action:manipulation;display:flex;align-items:center;justify-content:center;}
+.fab:active{transform:scale(.92);box-shadow:0 2px 8px rgba(200,75,47,.4);}
+.fab-icon{line-height:1;transition:transform .3s cubic-bezier(.4,0,.2,1);}
+.fab.open .fab-icon{transform:rotate(45deg);}
+
+/* ── COMPOSE SHEET (mobile) ── */
+.compose-sheet-overlay{display:none;position:fixed;inset:0;background:rgba(26,21,16,.45);z-index:160;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);opacity:0;transition:opacity .25s;}
+.compose-sheet-overlay.open{display:block;opacity:1;}
+.compose-sheet{position:fixed;bottom:0;left:0;right:0;z-index:170;background:var(--card);border-radius:24px 24px 0 0;border-top:1px solid var(--border);border-left:1px solid var(--border);border-right:1px solid var(--border);padding:0 0 calc(16px + var(--safe-b));box-shadow:0 -8px 60px rgba(26,21,16,.18);transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);}
+.compose-sheet.open{transform:translateY(0);}
+.sheet-handle{display:flex;justify-content:center;padding:12px 0 4px;}
+.sheet-handle-bar{width:36px;height:4px;background:var(--border);border-radius:2px;}
+.sheet-header{display:flex;align-items:center;justify-content:space-between;padding:6px 16px 12px;}
+.sheet-title{font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;color:var(--muted);}
+.sheet-close{background:var(--warm);border:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--muted);cursor:pointer;touch-action:manipulation;}
+.sheet-close:active{background:var(--border);color:var(--ink);}
+.sheet-body{padding:0 16px;}
+.sheet-row{display:flex;gap:10px;align-items:flex-start;}
+.sheet-av{width:38px;height:38px;border-radius:50%;background:var(--warm);border:2px solid var(--border);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:600;color:var(--muted);}
+.sheet-av img{width:100%;height:100%;object-fit:cover;}
+.sheet-right{flex:1;min-width:0;}
+.sheet-mention-wrap{position:relative;}
+.sheet-textarea{width:100%;background:none;border:none;padding:8px 0;font-size:1rem;color:var(--ink);resize:none;min-height:80px;max-height:180px;outline:none;line-height:1.55;-webkit-appearance:none;}
+.sheet-textarea::placeholder{color:var(--muted);}
+.sheet-preview{margin:10px 0 0;position:relative;display:none;}
+.sheet-preview img{width:100%;border-radius:12px;max-height:200px;object-fit:cover;border:1px solid var(--border);}
+.sheet-preview .remove-photo{position:absolute;top:8px;right:8px;}
+.sheet-divider{height:1px;background:var(--border);margin:10px 0;}
+.sheet-actions{display:flex;align-items:center;justify-content:space-between;}
+.sheet-actions-left{display:flex;gap:4px;}
+
 /* MENTION DROPDOWN */
 .mention-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 30px var(--shadow-md);z-index:500;overflow:hidden;max-height:200px;overflow-y:auto;display:none;}
 .mention-dropdown.open{display:block;}
@@ -118,6 +152,8 @@ nav{background:rgba(250,247,242,.92);border-bottom:1px solid var(--border);paddi
 .mention-item-av img{width:100%;height:100%;object-fit:cover;}
 .mention-item-name{font-size:.88rem;font-weight:500;}
 .mention-item-name em{color:var(--accent);font-style:normal;font-weight:700;}
+.sheet-mention-dd{position:absolute;bottom:calc(100% + 4px);left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 -4px 20px var(--shadow-md);z-index:500;overflow:hidden;max-height:180px;overflow-y:auto;display:none;}
+.sheet-mention-dd.open{display:block;}
 .comment-mention-wrap{position:relative;flex:1;}
 .comment-mention-dd{position:absolute;bottom:calc(100% + 4px);left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 -4px 20px var(--shadow-md);z-index:500;overflow:hidden;max-height:180px;overflow-y:auto;display:none;}
 .comment-mention-dd.open{display:block;}
@@ -206,10 +242,20 @@ nav{background:rgba(250,247,242,.92);border-bottom:1px solid var(--border);paddi
 
 ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 
+/* ── RESPONSIVE ── */
+@media(max-width:599px){
+  /* Hide desktop composer on mobile */
+  .composer{display:none;}
+  /* Show FAB on mobile */
+  .fab{display:flex;}
+}
+
 @media(min-width:600px){
+  .fab{display:none !important;}
+  .compose-sheet-overlay{display:none !important;}
   .users-bar-inner{padding:0 calc((100% - 640px)/2 + 20px) 16px;}
   .feed-layout{max-width:640px;margin:0 auto;padding:20px 0 40px;}
-  .composer{border:1px solid var(--border);border-radius:16px;margin:0 0 16px;padding:18px 20px;}
+  .composer{border:1px solid var(--border);border-radius:16px;margin:0 0 16px;padding:18px 20px;display:block;}
   .post-card{border:1px solid var(--border);border-radius:16px;margin-bottom:16px;overflow:hidden;}
   .post-card:first-child{border-top:1px solid var(--border);}
   #feed-screen{padding-bottom:40px;}
@@ -273,6 +319,7 @@ nav{background:rgba(250,247,242,.92);border-bottom:1px solid var(--border);paddi
   </nav>
   <div class="users-bar"><div class="users-bar-inner" id="users-bar"></div></div>
   <div class="feed-layout">
+    <!-- Desktop composer (visible ≥600px) -->
     <div class="composer">
       <div class="composer-row">
         <div class="composer-avatar" id="compose-av"></div>
@@ -283,7 +330,7 @@ nav{background:rgba(250,247,242,.92);border-bottom:1px solid var(--border);paddi
           </div>
           <div class="compose-preview" id="compose-preview">
             <img id="compose-preview-img" src="" alt="">
-            <button class="remove-photo" onclick="removePhoto()">✕</button>
+            <button class="remove-photo" onclick="removePhoto('desktop')">✕</button>
           </div>
         </div>
       </div>
@@ -291,12 +338,52 @@ nav{background:rgba(250,247,242,.92);border-bottom:1px solid var(--border);paddi
       <div class="composer-actions">
         <div class="composer-actions-left">
           <label class="btn-icon" for="compose-photo" title="Foto">📷</label>
-          <input type="file" id="compose-photo" accept="image/*" style="display:none" onchange="previewPhoto(event)">
+          <input type="file" id="compose-photo" accept="image/*" style="display:none" onchange="previewPhoto(event,'desktop')">
         </div>
-        <button class="btn-post" id="btn-post" onclick="submitPost()">Publicar</button>
+        <button class="btn-post" id="btn-post" onclick="submitPost('desktop')">Publicar</button>
       </div>
     </div>
     <div class="posts-list" id="posts-list"></div>
+  </div>
+</div>
+
+<!-- FAB (mobile only) -->
+<button class="fab" id="fab" onclick="toggleSheet()" aria-label="Nuevo post">
+  <span class="fab-icon">✎</span>
+</button>
+
+<!-- Compose sheet overlay -->
+<div class="compose-sheet-overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+
+<!-- Compose sheet -->
+<div class="compose-sheet" id="compose-sheet">
+  <div class="sheet-handle"><div class="sheet-handle-bar"></div></div>
+  <div class="sheet-header">
+    <span class="sheet-title">Nueva publicación</span>
+    <button class="sheet-close" onclick="closeSheet()">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="sheet-row">
+      <div class="sheet-av" id="sheet-av"></div>
+      <div class="sheet-right">
+        <div class="sheet-mention-wrap">
+          <div class="sheet-mention-dd" id="sheet-mention-dd"></div>
+          <textarea class="sheet-textarea" id="sheet-text" placeholder="Qué hay de nuevo? Usa @ para mencionar..." rows="4"></textarea>
+        </div>
+        <div class="sheet-preview" id="sheet-preview">
+          <img id="sheet-preview-img" src="" alt="">
+          <button class="remove-photo" onclick="removePhoto('mobile')">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-divider"></div>
+    <div class="sheet-actions">
+      <div class="sheet-actions-left">
+        <label class="btn-icon" for="sheet-photo" title="Foto">📷</label>
+        <input type="file" id="sheet-photo" accept="image/*" style="display:none" onchange="previewPhoto(event,'mobile')">
+      </div>
+      <button class="btn-post" id="btn-post-mobile" onclick="submitPost('mobile')">Publicar</button>
+    </div>
   </div>
 </div>
 
@@ -312,7 +399,7 @@ const SURL='https://ztzmjaemedttoufcqque.supabase.co';
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0em1qYWVtZWR0dG91ZmNxcXVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0ODI0ODMsImV4cCI6MjA5MDA1ODQ4M30.WUTFWpp0G0RTBX6zU2GmtUriAbqVOoa2B4NOP_DUyyo';
 const sb=supabase.createClient(SURL,SKEY);
 let me=null,allUsers={},posts=[];
-let pendingPhoto=null,editAv=null,regAv=null;
+let pendingPhotoDesktop=null,pendingPhotoMobile=null,editAv=null,regAv=null;
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -326,6 +413,39 @@ function readFile(file,cb){const r=new FileReader();r.onload=e=>cb(e.target.resu
 async function sha256(str){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}
 function saveSession(u){localStorage.setItem('fz_ses',JSON.stringify({id:u.id,username:u.username}));}
 
+// ── COMPOSE SHEET ───────────────────────
+function toggleSheet(){
+  const sheet=$('compose-sheet'),overlay=$('sheet-overlay'),fab=$('fab');
+  const isOpen=sheet.classList.contains('open');
+  if(isOpen)closeSheet();
+  else openSheet();
+}
+function openSheet(){
+  $('compose-sheet').classList.add('open');
+  $('sheet-overlay').classList.add('open');
+  $('fab').classList.add('open');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>$('sheet-text').focus(),350);
+}
+function closeSheet(){
+  $('compose-sheet').classList.remove('open');
+  $('sheet-overlay').classList.remove('open');
+  $('fab').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+// Swipe down to close sheet
+(function(){
+  const sheet=$('compose-sheet');
+  let startY=0,startT=0;
+  sheet.addEventListener('touchstart',e=>{startY=e.touches[0].clientY;startT=Date.now();},{passive:true});
+  sheet.addEventListener('touchend',e=>{
+    const dy=e.changedTouches[0].clientY-startY;
+    const dt=Date.now()-startT;
+    if(dy>80&&dt<400)closeSheet();
+  },{passive:true});
+})();
+
 // ── MENTION SYSTEM ─────────────────────
 function renderText(text){
   if(!text)return'';
@@ -338,7 +458,6 @@ function renderText(text){
 
 function MentionHandler(textarea,dropdown,getUsers){
   let mentionStart=-1,mentionQuery='',selectedIdx=0,items=[];
-
   function getCaretPos(){return textarea.selectionStart;}
   function getCurrentMention(){
     const val=textarea.value,pos=getCaretPos();
@@ -372,7 +491,6 @@ function MentionHandler(textarea,dropdown,getUsers){
     hideDropdown();textarea.dispatchEvent(new Event('input'));
   }
   function highlightItem(idx){dropdown.querySelectorAll('.mention-item').forEach((el,i)=>el.classList.toggle('selected',i===idx));}
-
   textarea.addEventListener('input',()=>{const m=getCurrentMention();if(m){mentionStart=m.start;mentionQuery=m.query;showDropdown(m.query);}else hideDropdown();});
   textarea.addEventListener('keydown',e=>{
     if(!dropdown.classList.contains('open'))return;
@@ -395,7 +513,11 @@ function MentionHandler(textarea,dropdown,getUsers){
   function onStart(y){if(!$('feed-screen').classList.contains('active'))return;if(window.scrollY>2)return;startY=y;pulling=true;triggered=false;ind.style.transition='none';}
   async function onRelease(){if(!pulling)return;if(triggered&&!refreshing){refreshing=true;ind.style.transition='transform .25s cubic-bezier(.4,0,.2,1)';setY(THRESHOLD+8);ind.classList.add('ptr-loading');ind.classList.remove('ptr-triggered');arrow.textContent='↻';label.textContent='Actualizando…';try{await refresh();}catch(e){}label.textContent='Listo!';arrow.textContent='✓';await new Promise(r=>setTimeout(r,600));refreshing=false;reset();}else reset();pulling=false;}
   function onMove(y){if(!pulling||refreshing)return;const dy=y-startY;if(dy<=0){pulling=false;return;}ind.classList.add('ptr-visible');setY(Math.min(dy,MAX_PULL));const trig=dy>=THRESHOLD;if(trig!==triggered){triggered=trig;ind.classList.toggle('ptr-triggered',trig);arrow.textContent=trig?'↑':'↓';label.textContent=trig?'Suelta para actualizar!':'Desliza para actualizar';}}
-  document.addEventListener('touchstart',e=>onStart(e.touches[0].clientY),{passive:true});
+  document.addEventListener('touchstart',e=>{
+    // Don't trigger PTR if sheet is open
+    if($('compose-sheet').classList.contains('open'))return;
+    onStart(e.touches[0].clientY);
+  },{passive:true});
   document.addEventListener('touchmove',e=>onMove(e.touches[0].clientY),{passive:true});
   document.addEventListener('touchend',()=>onRelease());
   let md=false;
@@ -489,10 +611,17 @@ function renderUsersBar(){
 }
 
 function initComposer(){
+  // Desktop
   const ta=$('compose-text'),dd=$('compose-mention-dd');
   MentionHandler(ta,dd,()=>Object.values(allUsers));
   const cav=$('compose-av');
   cav.innerHTML=me.avatar_b64?`<img src="${me.avatar_b64}" alt="">`:ini(me.username);
+
+  // Mobile sheet
+  const sta=$('sheet-text'),sdd=$('sheet-mention-dd');
+  MentionHandler(sta,sdd,()=>Object.values(allUsers));
+  const sav=$('sheet-av');
+  sav.innerHTML=me.avatar_b64?`<img src="${me.avatar_b64}" alt="">`:ini(me.username);
 }
 
 function renderPosts(){
@@ -564,14 +693,46 @@ function renderComments(post){
   });
 }
 
-function previewPhoto(e){readFile(e.target.files[0],d=>{pendingPhoto=d;$('compose-preview-img').src=d;$('compose-preview').style.display='block';});}
-function removePhoto(){pendingPhoto=null;$('compose-preview').style.display='none';$('compose-preview-img').src='';$('compose-photo').value='';}
-async function submitPost(){
-  const text=$('compose-text').value.trim();
-  if(!text&&!pendingPhoto)return;
-  setBtn('btn-post',true);
-  await sb.from('fz_posts').insert({user_id:me.id,text:text||null,image_b64:pendingPhoto||null});
-  $('compose-text').value='';removePhoto();setBtn('btn-post',false);await refresh();
+function previewPhoto(e, ctx){
+  readFile(e.target.files[0], d=>{
+    if(ctx==='desktop'){
+      pendingPhotoDesktop=d;
+      $('compose-preview-img').src=d;
+      $('compose-preview').style.display='block';
+    } else {
+      pendingPhotoMobile=d;
+      $('sheet-preview-img').src=d;
+      $('sheet-preview').style.display='block';
+    }
+  });
+}
+function removePhoto(ctx){
+  if(ctx==='desktop'){
+    pendingPhotoDesktop=null;
+    $('compose-preview').style.display='none';
+    $('compose-preview-img').src='';
+    $('compose-photo').value='';
+  } else {
+    pendingPhotoMobile=null;
+    $('sheet-preview').style.display='none';
+    $('sheet-preview-img').src='';
+    $('sheet-photo').value='';
+  }
+}
+async function submitPost(ctx){
+  const isMobile=ctx==='mobile';
+  const textEl=isMobile?$('sheet-text'):$('compose-text');
+  const btnId=isMobile?'btn-post-mobile':'btn-post';
+  const photo=isMobile?pendingPhotoMobile:pendingPhotoDesktop;
+  const text=textEl.value.trim();
+  if(!text&&!photo)return;
+  setBtn(btnId,true);
+  await sb.from('fz_posts').insert({user_id:me.id,text:text||null,image_b64:photo||null});
+  textEl.value='';
+  removePhoto(ctx);
+  setBtn(btnId,false);
+  if(isMobile)closeSheet();
+  await refresh();
 }
 async function toggleLike(postId,likeId){
   if(likeId)await sb.from('fz_likes').delete().eq('id',likeId);

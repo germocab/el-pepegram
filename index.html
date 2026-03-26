@@ -729,6 +729,14 @@ $('profile-modal').addEventListener('click',e=>{if(e.target===$('profile-modal')
   $('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   $('login-user').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 })();
+
+  if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registrado', reg))
+      .catch(err => console.log('Error SW', err));
+  });
+}
 </script>
 </body>
 </html>
